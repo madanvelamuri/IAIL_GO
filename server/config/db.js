@@ -1,12 +1,16 @@
 // config/db.js
 console.log("DATABASE_URL:", process.env.DATABASE_URL);
+
 const { Pool } = require("pg");
 
-// Create PostgreSQL connection pool
+const isProduction = process.env.NODE_ENV === "production";
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: isProduction
+    ? { rejectUnauthorized: false }
+    : false,
 });
-
 
 // Test connection
 pool.connect((err, client, release) => {
@@ -47,7 +51,6 @@ CREATE TABLE IF NOT EXISTS mistakes (
 );
 `;
 
-// Run table creation
 const initializeDatabase = async () => {
   try {
     await pool.query(createUsersTable);
