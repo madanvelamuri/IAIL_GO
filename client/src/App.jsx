@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import AddMistake from "./pages/AddMistake";
 import ProLayout from "./components/ProLayout";
+import Register from "./pages/Register";
 
 function App() {
   const token = localStorage.getItem("token");
@@ -18,6 +19,14 @@ function App() {
           path="/"
           element={
             token ? <Navigate to="/dashboard" /> : <Login />
+          }
+        />
+
+        {/* ✅ REGISTER ROUTE (ADD THIS) */}
+        <Route
+          path="/register"
+          element={
+            token ? <Navigate to="/dashboard" /> : <Register />
           }
         />
 
