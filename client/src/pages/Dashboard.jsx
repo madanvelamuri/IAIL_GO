@@ -48,7 +48,6 @@ export default function Dashboard() {
     }
   };
 
-  // FILTER 
   const handleSearch = () => {
     let data = [...mistakes];
 
@@ -89,7 +88,6 @@ export default function Dashboard() {
     setFilteredData(mistakes);
   };
 
-  // DELETE 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this record?")) return;
 
@@ -101,7 +99,6 @@ export default function Dashboard() {
     }
   };
 
-  // EXPORT CSV 
   const handleExportCSV = () => {
     if (filteredData.length === 0) {
       alert("No data to export");
@@ -146,7 +143,6 @@ export default function Dashboard() {
     document.body.removeChild(link);
   };
 
-  // KPI LOGIC 
   const totalMistakes = filteredData.length;
 
   const thisMonth = new Date().getMonth();
@@ -192,7 +188,7 @@ export default function Dashboard() {
     labels: Object.keys(monthly),
     datasets: [
       {
-        label: "Monthly Mistakes",
+        label: "Monthly Mistakes 📉",
         data: Object.values(monthly),
         borderColor: "#2563eb",
         backgroundColor: "rgba(37,99,235,0.15)",
@@ -206,7 +202,7 @@ export default function Dashboard() {
     labels: Object.keys(typeFrequency),
     datasets: [
       {
-        label: "Mistake Count",
+        label: "Mistake Count 🐞",
         data: Object.values(typeFrequency),
         backgroundColor: "#16a34a",
       },
@@ -216,25 +212,22 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 p-10 space-y-12">
 
-      {/* HEADER */}
       <div>
         <h1 className="text-4xl font-extrabold text-slate-800">
-          Analytics Dashboard
+          📊 Analytics Dashboard
         </h1>
         <p className="text-slate-500 mt-2">
-          Mistake tracking insights & performance overview
+          Mistake tracking insights & performance overview 🚀
         </p>
       </div>
 
-      {/* KPI CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        <KpiCard title="Total Mistakes" value={totalMistakes} color="text-blue-600" />
-        <KpiCard title="This Month" value={thisMonthCount} color="text-indigo-600" />
-        <KpiText title="Most of Mistakes Done in" value={topMistake} color="text-red-600" />
-        <KpiText title="Mostly Mistake Done By" value={topEmployee} color="text-green-600" />
+        <KpiCard title="Total Mistakes 🐞" value={totalMistakes} color="text-blue-600" />
+        <KpiCard title="This Month 📅" value={thisMonthCount} color="text-indigo-600" />
+        <KpiText title="Most of Mistakes Done in 🔥" value={topMistake} color="text-red-600" />
+        <KpiText title="Mostly Mistake Done By 🧑‍💻" value={topEmployee} color="text-green-600" />
       </div>
 
-      {/* FILTER */}
       <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-200 flex flex-wrap gap-4">
         <Input type="date" value={filters.from}
           onChange={(e) => setFilters({ ...filters, from: e.target.value })} />
@@ -242,40 +235,38 @@ export default function Dashboard() {
         <Input type="date" value={filters.to}
           onChange={(e) => setFilters({ ...filters, to: e.target.value })} />
 
-        <Input type="text" placeholder="Employee"
+        <Input type="text" placeholder="Employee 👤"
           value={filters.employee}
           onChange={(e) => setFilters({ ...filters, employee: e.target.value })} />
 
-        <Input type="text" placeholder="Mistake Type"
+        <Input type="text" placeholder="Mistake Type 🐞"
           value={filters.type}
           onChange={(e) => setFilters({ ...filters, type: e.target.value })} />
 
-        <Button onClick={handleSearch} color="blue">Search</Button>
-        <Button onClick={handleReset} color="gray">Reset</Button>
-        <Button onClick={handleExportCSV} color="green">Export CSV</Button>
+        <Button onClick={handleSearch} color="blue">🔍 Search</Button>
+        <Button onClick={handleReset} color="gray">♻️ Reset</Button>
+        <Button onClick={handleExportCSV} color="green">📄 Export CSV</Button>
       </div>
 
-      {/* CHARTS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        <ChartCard title="Monthly Trend">
+        <ChartCard title="Monthly Trend 📈">
           <Line data={trendData} />
         </ChartCard>
-        <ChartCard title="Mistake Type Distribution">
+        <ChartCard title="Mistake Type Distribution 🐞">
           <Bar data={barData} />
         </ChartCard>
       </div>
 
-      {/* TABLE */}
       <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-slate-100 text-slate-600 uppercase text-xs">
             <tr>
-              <th className="p-4">Claim ID</th>
-              <th className="p-4">Employee</th>
-              <th className="p-4">Type</th>
-              <th className="p-4">Description</th>
-              <th className="p-4">Date</th>
-              <th className="p-4 text-center">Action</th>
+              <th className="p-4">📌 Claim ID</th>
+              <th className="p-4">👤 Employee</th>
+              <th className="p-4">🐞 Type</th>
+              <th className="p-4">📝 Description</th>
+              <th className="p-4">📅 Date</th>
+              <th className="p-4 text-center">⚙️ Action</th>
             </tr>
           </thead>
           <tbody>
@@ -293,7 +284,7 @@ export default function Dashboard() {
                     onClick={() => handleDelete(m.id)}
                     className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-lg text-xs"
                   >
-                    D
+                    🗑️
                   </button>
                 </td>
               </tr>
@@ -306,13 +297,11 @@ export default function Dashboard() {
   );
 }
 
-/* REUSABLE COMPONENTS  */
-
 const KpiCard = ({ title, value, color }) => (
   <div className="bg-white p-6 rounded-2xl shadow border border-slate-200">
     <p className="text-slate-500 text-sm">{title}</p>
     <h2 className={`text-4xl font-bold mt-3 ${color}`}>
-      <CountUp end={value} duration={1.5} />
+      <CountUp end={value} duration={1.5} /> 😅
     </h2>
   </div>
 );
@@ -321,7 +310,7 @@ const KpiText = ({ title, value, color }) => (
   <div className="bg-white p-6 rounded-2xl shadow border border-slate-200">
     <p className="text-slate-500 text-sm">{title}</p>
     <h2 className={`text-xl font-semibold mt-3 ${color}`}>
-      {value}
+      {value} 😬
     </h2>
   </div>
 );
