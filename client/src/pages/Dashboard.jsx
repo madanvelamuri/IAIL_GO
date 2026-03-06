@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import API from "../services/api";
 import CountUp from "react-countup";
 import { Bar, Line } from "react-chartjs-2";
@@ -143,6 +143,8 @@ export default function Dashboard() {
     document.body.removeChild(link);
   };
 
+  /* PERFORMANCE OPTIMIZATION */
+
   const totalMistakes = filteredData.length;
 
   const thisMonth = new Date().getMonth();
@@ -150,11 +152,21 @@ export default function Dashboard() {
     (m) => new Date(m.created_at).getMonth() === thisMonth
   ).length;
 
-  const typeFrequency = {};
-  filteredData.forEach((m) => {
-    typeFrequency[m.mistake_type] =
-      (typeFrequency[m.mistake_type] || 0) + 1;
-  });
+  const typeFrequency = useMemo(() => {
+    const freq = {};
+    filteredData.forEach((m) => {
+      freq[m.mistake_type] = (freq[m.mistake_type] || 0) + 1;
+    });
+    return freq;
+  }, [filteredData]);
+
+  const employeeFrequency = useMemo(() => {
+    const freq = {};
+    filteredData.forEach((m) => {
+      freq[m.employee_name] = (freq[m.employee_name] || 0) + 1;
+    });
+    return freq;
+  }, [filteredData]);
 
   const topMistake =
     Object.keys(typeFrequency).length > 0
@@ -163,12 +175,6 @@ export default function Dashboard() {
         )
       : "-";
 
-  const employeeFrequency = {};
-  filteredData.forEach((m) => {
-    employeeFrequency[m.employee_name] =
-      (employeeFrequency[m.employee_name] || 0) + 1;
-  });
-
   const topEmployee =
     Object.keys(employeeFrequency).length > 0
       ? Object.keys(employeeFrequency).reduce((a, b) =>
@@ -176,13 +182,16 @@ export default function Dashboard() {
         )
       : "-";
 
-  const monthly = {};
-  filteredData.forEach((m) => {
-    const month = new Date(m.created_at).toLocaleString("default", {
-      month: "short",
+  const monthly = useMemo(() => {
+    const data = {};
+    filteredData.forEach((m) => {
+      const month = new Date(m.created_at).toLocaleString("default", {
+        month: "short",
+      });
+      data[month] = (data[month] || 0) + 1;
     });
-    monthly[month] = (monthly[month] || 0) + 1;
-  });
+    return data;
+  }, [filteredData]);
 
   const trendData = {
     labels: Object.keys(monthly),
@@ -209,6 +218,12 @@ export default function Dashboard() {
     ],
   };
 
+  const chartOptions = {
+    animation: false,
+    responsive: true,
+    maintainAspectRatio: false,
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-200 p-10 space-y-12">
 
@@ -228,7 +243,7 @@ export default function Dashboard() {
         <KpiText title="Mostly Mistake Done By 🧑‍💻" value={topEmployee} color="text-green-600" />
       </div>
 
-      <div className="bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-2xl shadow-slate-300/40 border border-white flex flex-wrap gap-4">
+      <div className="bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-2xl border flex flex-wrap gap-4">
         <Input type="date" value={filters.from}
           onChange={(e) => setFilters({ ...filters, from: e.target.value })} />
 
@@ -250,14 +265,15 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         <ChartCard title="Monthly Trend 📈">
-          <Line data={trendData} />
+          <Line data={trendData} options={chartOptions} />
         </ChartCard>
+
         <ChartCard title="Mistake Type Distribution 🐞">
-          <Bar data={barData} />
+          <Bar data={barData} options={chartOptions} />
         </ChartCard>
       </div>
 
-      <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl shadow-slate-300/40 border border-white overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-lg border overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-slate-100 text-slate-600 uppercase text-xs">
             <tr>
@@ -269,9 +285,10 @@ export default function Dashboard() {
               <th className="p-4 text-center">⚙️ Action</th>
             </tr>
           </thead>
+
           <tbody>
             {filteredData.map((m) => (
-              <tr key={m.id} className="border-t hover:bg-blue-50/40 transition-colors">
+              <tr key={m.id} className="border-t hover:bg-blue-50 transition">
                 <td className="p-4 font-medium">{m.claim_id}</td>
                 <td className="p-4">{m.employee_name}</td>
                 <td className="p-4">{m.mistake_type}</td>
@@ -282,7 +299,7 @@ export default function Dashboard() {
                 <td className="p-4 text-center">
                   <button
                     onClick={() => handleDelete(m.id)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-lg text-xs shadow-md hover:shadow-lg transition"
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-lg text-xs"
                   >
                     🗑️
                   </button>
@@ -297,28 +314,30 @@ export default function Dashboard() {
   );
 }
 
-const KpiCard = ({ title, value, color }) => (
-  <div className="bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-xl shadow-slate-300/40 border border-white hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+/* COMPONENTS */
+
+const KpiCard = React.memo(({ title, value, color }) => (
+  <div className="bg-white p-6 rounded-2xl shadow border">
     <p className="text-slate-500 text-sm">{title}</p>
     <h2 className={`text-4xl font-bold mt-3 ${color}`}>
       <CountUp end={value} duration={1.5} /> 😅
     </h2>
   </div>
-);
+));
 
-const KpiText = ({ title, value, color }) => (
-  <div className="bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-xl shadow-slate-300/40 border border-white hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+const KpiText = React.memo(({ title, value, color }) => (
+  <div className="bg-white p-6 rounded-2xl shadow border">
     <p className="text-slate-500 text-sm">{title}</p>
     <h2 className={`text-xl font-semibold mt-3 ${color}`}>
       {value} 😬
     </h2>
   </div>
-);
+));
 
 const Input = (props) => (
   <input
     {...props}
-    className="border border-slate-300 px-4 py-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm"
+    className="border border-slate-300 px-4 py-2 rounded-xl focus:ring-2 focus:ring-blue-500"
   />
 );
 
@@ -332,7 +351,7 @@ const Button = ({ children, color, ...props }) => {
   return (
     <button
       {...props}
-      className={`${colors[color]} text-white px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transition`}
+      className={`${colors[color]} text-white px-6 py-2 rounded-xl shadow-md`}
     >
       {children}
     </button>
@@ -340,10 +359,8 @@ const Button = ({ children, color, ...props }) => {
 };
 
 const ChartCard = ({ title, children }) => (
-  <div className="bg-white/90 backdrop-blur-md p-8 rounded-2xl shadow-2xl shadow-slate-300/40 border border-white hover:shadow-3xl transition-all">
-    <h3 className="text-lg font-semibold text-slate-700 mb-4">
-      {title}
-    </h3>
+  <div className="bg-white p-8 rounded-2xl shadow-lg border">
+    <h3 className="text-lg font-semibold text-slate-700 mb-4">{title}</h3>
     {children}
   </div>
 );
