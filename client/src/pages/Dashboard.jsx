@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import API from "../services/api";
 import CountUp from "react-countup";
 import { Bar, Line } from "react-chartjs-2";
@@ -22,6 +22,14 @@ ChartJS.register(
   Tooltip,
   Legend
 );
+
+/* ---------------- Utility Functions ---------------- */
+
+const formatDate = (date) =>
+  new Date(date).toISOString().split("T")[0];
+
+const safeCSV = (value) =>
+  `="${String(value).replace(/"/g, '""')}"`;
 
 export default function Dashboard() {
   const [mistakes, setMistakes] = useState([]);
@@ -48,18 +56,24 @@ export default function Dashboard() {
     }
   };
 
+  /* ---------------- Filtering ---------------- */
+
   const handleSearch = () => {
     let data = [...mistakes];
 
     if (filters.employee) {
       data = data.filter((m) =>
-        m.employee_name.toLowerCase().includes(filters.employee.toLowerCase())
+        m.employee_name
+          .toLowerCase()
+          .includes(filters.employee.toLowerCase())
       );
     }
 
     if (filters.type) {
       data = data.filter((m) =>
-        m.mistake_type.toLowerCase().includes(filters.type.toLowerCase())
+        m.mistake_type
+          .toLowerCase()
+          .includes(filters.type.toLowerCase())
       );
     }
 
@@ -88,6 +102,8 @@ export default function Dashboard() {
     setFilteredData(mistakes);
   };
 
+  /* ---------------- Delete ---------------- */
+
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this record?")) return;
 
@@ -99,11 +115,7 @@ export default function Dashboard() {
     }
   };
 
-  /* SAFE CSV ESCAPE */
-  const escapeCSV = (value) => {
-    if (!value) return "";
-    return `"${String(value).replace(/"/g, '""')}"`;
-  };
+  /* ---------------- CSV Export ---------------- */
 
   const handleExportCSV = () => {
     if (filteredData.length === 0) {
@@ -120,15 +132,15 @@ export default function Dashboard() {
     ];
 
     const rows = filteredData.map((m) => [
-      `="${m.claim_id}"`,
-      escapeCSV(m.employee_name),
-      escapeCSV(m.mistake_type),
-      escapeCSV(m.description),
-      escapeCSV(new Date(m.created_at).toISOString().split("T")[0]),
+      safeCSV(m.claim_id),
+      safeCSV(m.employee_name),
+      safeCSV(m.mistake_type),
+      safeCSV(m.description),
+      safeCSV(formatDate(m.created_at)),
     ]);
 
     const csvContent = [headers, ...rows]
-      .map((e) => e.join(","))
+      .map((row) => row.join(","))
       .join("\n");
 
     const blob = new Blob([csvContent], {
@@ -138,29 +150,41 @@ export default function Dashboard() {
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
 
-    link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `mistakes_report_${new Date().toISOString().split("T")[0]}.csv`
-    );
+    link.href = url;
+    link.download = `mistakes_report_${formatDate(new Date())}.csv`;
 
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
+  /* ---------------- KPI Calculations ---------------- */
+
   const totalMistakes = filteredData.length;
 
-  const thisMonth = new Date().getMonth();
   const thisMonthCount = filteredData.filter(
-    (m) => new Date(m.created_at).getMonth() === thisMonth
+    (m) =>
+      new Date(m.created_at).getMonth() ===
+      new Date().getMonth()
   ).length;
 
-  const typeFrequency = {};
-  filteredData.forEach((m) => {
-    typeFrequency[m.mistake_type] =
-      (typeFrequency[m.mistake_type] || 0) + 1;
-  });
+  const typeFrequency = useMemo(() => {
+    const freq = {};
+    filteredData.forEach((m) => {
+      freq[m.mistake_type] =
+        (freq[m.mistake_type] || 0) + 1;
+    });
+    return freq;
+  }, [filteredData]);
+
+  const employeeFrequency = useMemo(() => {
+    const freq = {};
+    filteredData.forEach((m) => {
+      freq[m.employee_name] =
+        (freq[m.employee_name] || 0) + 1;
+    });
+    return freq;
+  }, [filteredData]);
 
   const topMistake =
     Object.keys(typeFrequency).length > 0
@@ -169,12 +193,6 @@ export default function Dashboard() {
         )
       : "-";
 
-  const employeeFrequency = {};
-  filteredData.forEach((m) => {
-    employeeFrequency[m.employee_name] =
-      (employeeFrequency[m.employee_name] || 0) + 1;
-  });
-
   const topEmployee =
     Object.keys(employeeFrequency).length > 0
       ? Object.keys(employeeFrequency).reduce((a, b) =>
@@ -182,13 +200,20 @@ export default function Dashboard() {
         )
       : "-";
 
-  const monthly = {};
-  filteredData.forEach((m) => {
-    const month = new Date(m.created_at).toLocaleString("default", {
-      month: "short",
+  /* ---------------- Chart Data ---------------- */
+
+  const monthly = useMemo(() => {
+    const result = {};
+    filteredData.forEach((m) => {
+      const month = new Date(
+        m.created_at
+      ).toLocaleString("default", {
+        month: "short",
+      });
+      result[month] = (result[month] || 0) + 1;
     });
-    monthly[month] = (monthly[month] || 0) + 1;
-  });
+    return result;
+  }, [filteredData]);
 
   const trendData = {
     labels: Object.keys(monthly),
@@ -197,7 +222,7 @@ export default function Dashboard() {
         label: "Monthly Mistakes 📉",
         data: Object.values(monthly),
         borderColor: "#3b82f6",
-        backgroundColor: "rgba(59, 130, 246, 0.1)",
+        backgroundColor: "rgba(59,130,246,0.1)",
         tension: 0.4,
         fill: true,
         pointBackgroundColor: "#1e40af",
@@ -214,19 +239,22 @@ export default function Dashboard() {
         label: "Mistake Count 🐞",
         data: Object.values(typeFrequency),
         backgroundColor: [
-          "rgba(244, 63, 94, 0.8)",
-          "rgba(14, 165, 233, 0.8)",
-          "rgba(34, 197, 94, 0.8)",
-          "rgba(168, 85, 247, 0.8)",
+          "rgba(244,63,94,0.8)",
+          "rgba(14,165,233,0.8)",
+          "rgba(34,197,94,0.8)",
+          "rgba(168,85,247,0.8)",
         ],
         borderRadius: 8,
       },
     ],
   };
 
+  /* ---------------- UI ---------------- */
+
   return (
     <div className="min-h-screen bg-[#f8fafc] p-6 lg:p-12 space-y-10 font-sans text-slate-900">
 
+      {/* Header */}
       <div>
         <h1 className="text-5xl font-black tracking-tight text-slate-900">
           📊 Analytics Dashboard
@@ -236,6 +264,7 @@ export default function Dashboard() {
         </p>
       </div>
 
+      {/* KPI */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KpiCard title="Total Mistakes 🐞" value={totalMistakes} color="text-blue-600" />
         <KpiCard title="This Month 📅" value={thisMonthCount} color="text-indigo-600" />
@@ -243,36 +272,75 @@ export default function Dashboard() {
         <KpiText title="Mostly Mistake Done By 🧑‍💻" value={topEmployee} color="text-emerald-600" />
       </div>
 
-      <div className="bg-white/80 backdrop-blur-md p-6 rounded-3xl shadow-xl border flex flex-wrap gap-4">
+      {/* Filter */}
+      <div className="bg-white p-6 rounded-3xl shadow-xl border flex flex-wrap gap-4">
 
         <Input type="date" value={filters.from}
-          onChange={(e) => setFilters({ ...filters, from: e.target.value })} />
+          onChange={(e) =>
+            setFilters({ ...filters, from: e.target.value })
+          }
+        />
 
         <Input type="date" value={filters.to}
-          onChange={(e) => setFilters({ ...filters, to: e.target.value })} />
+          onChange={(e) =>
+            setFilters({ ...filters, to: e.target.value })
+          }
+        />
 
         <Input type="text" placeholder="Employee 👤"
           value={filters.employee}
-          onChange={(e) => setFilters({ ...filters, employee: e.target.value })} />
+          onChange={(e) =>
+            setFilters({
+              ...filters,
+              employee: e.target.value,
+            })
+          }
+        />
 
         <Input type="text" placeholder="Mistake Type 🐞"
           value={filters.type}
-          onChange={(e) => setFilters({ ...filters, type: e.target.value })} />
+          onChange={(e) =>
+            setFilters({
+              ...filters,
+              type: e.target.value,
+            })
+          }
+        />
 
-        <Button onClick={handleSearch} color="blue">🔍 Search</Button>
-        <Button onClick={handleReset} color="gray">♻️ Reset</Button>
-        <Button onClick={handleExportCSV} color="green">📄 Export CSV</Button>
+        <Button onClick={handleSearch} color="blue">
+          🔍 Search
+        </Button>
+
+        <Button onClick={handleReset} color="gray">
+          ♻️ Reset
+        </Button>
+
+        <Button onClick={handleExportCSV} color="green">
+          📄 Export CSV
+        </Button>
       </div>
 
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <ChartCard title="Monthly Trend 📈">
+          <Line data={trendData} />
+        </ChartCard>
+
+        <ChartCard title="Mistake Type Distribution 🐞">
+          <Bar data={barData} />
+        </ChartCard>
+      </div>
     </div>
   );
 }
 
-/* COMPONENTS */
+/* ---------------- UI Components ---------------- */
 
 const KpiCard = ({ title, value, color }) => (
   <div className="bg-white p-7 rounded-3xl shadow-lg border">
-    <p className="text-slate-400 font-bold uppercase text-[11px]">{title}</p>
+    <p className="text-slate-400 font-bold uppercase text-[11px]">
+      {title}
+    </p>
     <h2 className={`text-5xl font-black mt-4 ${color}`}>
       <CountUp end={value} duration={2} separator="," />
     </h2>
@@ -281,7 +349,9 @@ const KpiCard = ({ title, value, color }) => (
 
 const KpiText = ({ title, value, color }) => (
   <div className="bg-white p-7 rounded-3xl shadow-lg border">
-    <p className="text-slate-400 font-bold uppercase text-[11px]">{title}</p>
+    <p className="text-slate-400 font-bold uppercase text-[11px]">
+      {title}
+    </p>
     <h2 className={`text-2xl font-black mt-4 ${color}`}>
       {value}
     </h2>
@@ -311,3 +381,14 @@ const Button = ({ children, color, ...props }) => {
     </button>
   );
 };
+
+const ChartCard = ({ title, children }) => (
+  <div className="bg-white p-8 rounded-[2rem] shadow-xl border">
+    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-8">
+      {title}
+    </h3>
+    <div className="min-h-[300px] flex items-center justify-center">
+      {children}
+    </div>
+  </div>
+);
