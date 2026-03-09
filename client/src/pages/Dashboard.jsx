@@ -89,7 +89,7 @@ export default function Dashboard() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Confirm deletion of this record?")) return;
+    if (!window.confirm("ARE YOU ABSOLUTELY SURE YOU WANT TO DO THIS")) return;
 
     try {
       await API.delete(`/mistakes/${id}`);
@@ -101,7 +101,7 @@ export default function Dashboard() {
 
   const handleExportCSV = () => {
     if (filteredData.length === 0) {
-      alert("No data available for export");
+      alert("NOTHING TO EXPORT CHIEF");
       return;
     }
 
@@ -120,7 +120,7 @@ export default function Dashboard() {
     const url = URL.createObjectURL(blob);
 
     link.setAttribute("href", url);
-    link.setAttribute("download", `Mistake_Report_${new Date().toISOString().split("T")[0]}.csv`);
+    link.setAttribute("download", `OOPS_REPORT_${new Date().toISOString().split("T")[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -139,7 +139,7 @@ export default function Dashboard() {
 
   const topMistake = Object.keys(typeFrequency).length > 0
     ? Object.keys(typeFrequency).reduce((a, b) => typeFrequency[a] > typeFrequency[b] ? a : b)
-    : "N/A";
+    : "NOTHING YET";
 
   const employeeFrequency = {};
   filteredData.forEach((m) => {
@@ -148,7 +148,7 @@ export default function Dashboard() {
 
   const topEmployee = Object.keys(employeeFrequency).length > 0
     ? Object.keys(employeeFrequency).reduce((a, b) => employeeFrequency[a] > employeeFrequency[b] ? a : b)
-    : "N/A";
+    : "GHOST";
 
   const monthly = {};
   filteredData.forEach((m) => {
@@ -159,122 +159,118 @@ export default function Dashboard() {
   const trendData = {
     labels: Object.keys(monthly),
     datasets: [{
-      label: "Monthly Volume",
+      label: "Chaos Level",
       data: Object.values(monthly),
-      borderColor: "#0f172a",
-      backgroundColor: "rgba(15, 23, 42, 0.05)",
-      tension: 0.3,
+      borderColor: "#FF00FF",
+      backgroundColor: "rgba(255, 0, 255, 0.2)",
+      tension: 0.5,
       fill: true,
+      pointRadius: 10,
     }],
   };
 
   const barData = {
     labels: Object.keys(typeFrequency),
     datasets: [{
-      label: "Incident Count",
+      label: "Count of Blunders",
       data: Object.values(typeFrequency),
-      backgroundColor: "#3b82f6",
+      backgroundColor: ["#FFFF00", "#00FFFF", "#FF00FF", "#00FF00"],
+      borderColor: "#000000",
+      borderWidth: 3,
     }],
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8 space-y-10">
+    <div className="min-h-screen bg-yellow-200 p-8 font-mono select-none">
       
       {/* Header Section */}
-      <div className="flex justify-between items-center border-b border-slate-200 pb-8">
-        <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-            Operational Intelligence Dashboard
-          </h1>
-          <p className="text-slate-500 mt-1 font-medium italic">
-            Analytical overview of mistake tracking and employee performance.
-          </p>
+      <div className="bg-white border-4 border-black p-6 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] mb-10 rotate-1 transition-transform hover:rotate-0">
+        <h1 className="text-6xl font-black text-black tracking-tighter italic uppercase">
+          Mistake Hub 5000
+        </h1>
+        <p className="text-xl font-bold bg-pink-400 text-white inline-block px-2 mt-4">
+          LOOK AT ALL THESE GLORIOUS ERRORS
+        </p>
+        <div className="mt-6">
+          <Button onClick={handleExportCSV} color="dark">GIVE ME THE CSV FILE NOW</Button>
         </div>
-        <Button onClick={handleExportCSV} color="dark">
-            <span className="flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                Export CSV Report
-            </span>
-        </Button>
       </div>
 
       {/* KPI Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KpiCard title="Total Mistakes Recorded" value={totalMistakes} accent="border-l-blue-600" />
-        <KpiCard title="Mistakes This Month" value={thisMonthCount} accent="border-l-indigo-600" />
-        <KpiText title="Primary Mistake Category" value={topMistake} accent="border-l-rose-600" />
-        <KpiText title="Lead Employee (Volume)" value={topEmployee} accent="border-l-emerald-600" />
+        <KpiCard title="THE TOTAL COUNT" value={totalMistakes} color="bg-cyan-300" />
+        <KpiCard title="THIS MONTHS MESS" value={thisMonthCount} color="bg-green-400" />
+        <KpiText title="THE CHAMPION MISTAKE" value={topMistake} color="bg-fuchsia-400" />
+        <KpiText title="MVP OF MISTAKES" value={topEmployee} color="bg-orange-400" />
       </div>
 
       {/* Filter Toolbar */}
-      <div className="bg-white p-6 rounded-xl shadow-md border border-slate-200 flex flex-wrap gap-6 items-end">
-        <div className="flex-1 min-w-[200px] space-y-2">
-          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Date From</label>
+      <div className="bg-blue-400 p-8 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-wrap gap-6 items-end mt-12 mb-12">
+        <div className="flex-1 min-w-[200px] space-y-2 font-black text-white italic">
+          <label>STARTING FROM</label>
           <Input type="date" value={filters.from} onChange={(e) => setFilters({ ...filters, from: e.target.value })} />
         </div>
-        <div className="flex-1 min-w-[200px] space-y-2">
-          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Date To</label>
+        <div className="flex-1 min-w-[200px] space-y-2 font-black text-white italic">
+          <label>ENDING AT</label>
           <Input type="date" value={filters.to} onChange={(e) => setFilters({ ...filters, to: e.target.value })} />
         </div>
-        <div className="flex-1 min-w-[200px] space-y-2">
-          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Employee Name</label>
-          <Input type="text" placeholder="Filter by name..." value={filters.employee} onChange={(e) => setFilters({ ...filters, employee: e.target.value })} />
+        <div className="flex-1 min-w-[200px] space-y-2 font-black text-white italic">
+          <label>WHO DID IT</label>
+          <Input type="text" placeholder="TYPE A NAME..." value={filters.employee} onChange={(e) => setFilters({ ...filters, employee: e.target.value })} />
         </div>
-        <div className="flex-1 min-w-[200px] space-y-2">
-          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Mistake Type</label>
-          <Input type="text" placeholder="Filter by type..." value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} />
+        <div className="flex-1 min-w-[200px] space-y-2 font-black text-white italic">
+          <label>WHAT KIND</label>
+          <Input type="text" placeholder="WHAT HAPPENED..." value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} />
         </div>
         <div className="flex gap-3">
-          <Button onClick={handleSearch} color="blue">Search</Button>
-          <Button onClick={handleReset} color="gray">Reset</Button>
+          <Button onClick={handleSearch} color="blue">GO GO GO</Button>
+          <Button onClick={handleReset} color="gray">CLEAR EVERYTHING</Button>
         </div>
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <ChartCard title="Monthly Trend Analysis">
-          <Line data={trendData} options={{ plugins: { legend: { display: false } } }} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <ChartCard title="THE UP AND DOWN GRAPH">
+          <Line data={trendData} />
         </ChartCard>
-        <ChartCard title="Distribution by Category">
-          <Bar data={barData} options={{ plugins: { legend: { display: false } } }} />
+        <ChartCard title="THE RECTANGLE CHART">
+          <Bar data={barData} />
         </ChartCard>
       </div>
 
       {/* Data Table */}
-      <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-slate-800 text-slate-200 font-bold uppercase text-[11px] tracking-wider">
+      <div className="bg-white border-8 border-black shadow-[15px_15px_0px_0px_rgba(255,0,255,1)] overflow-hidden mb-20">
+        <table className="w-full text-lg text-left border-collapse">
+          <thead className="bg-black text-yellow-300 font-black uppercase text-xl italic underline">
             <tr>
-              <th className="p-5">Claim ID</th>
-              <th className="p-5">Employee</th>
-              <th className="p-5">Mistake Type</th>
-              <th className="p-5">Description</th>
-              <th className="p-5">Created Date</th>
-              <th className="p-5 text-center">Actions</th>
+              <th className="p-5 border-4 border-black">CLAIM</th>
+              <th className="p-5 border-4 border-black">HUMAN</th>
+              <th className="p-5 border-4 border-black">OOPS TYPE</th>
+              <th className="p-5 border-4 border-black">THE STORY</th>
+              <th className="p-5 border-4 border-black">WHEN</th>
+              <th className="p-5 border-4 border-black text-center">ELIMINATE</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y-4 divide-black font-bold">
             {filteredData.map((m) => (
-              <tr key={m.id} className="hover:bg-blue-50/50 transition-colors">
-                <td className="p-5 font-bold text-slate-900">{m.claim_id}</td>
-                <td className="p-5 text-slate-700 font-medium">{m.employee_name}</td>
-                <td className="p-5">
-                    <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold border border-slate-200 uppercase tracking-tighter">
+              <tr key={m.id} className="hover:bg-yellow-100 transition-colors odd:bg-pink-50 even:bg-white">
+                <td className="p-5 border-4 border-black">{m.claim_id}</td>
+                <td className="p-5 border-4 border-black text-blue-600">{m.employee_name}</td>
+                <td className="p-5 border-4 border-black">
+                    <span className="p-2 bg-black text-white uppercase text-xs">
                         {m.mistake_type}
                     </span>
                 </td>
-                <td className="p-5 text-slate-500 max-w-md truncate">{m.description}</td>
-                <td className="p-5 text-slate-600 font-mono">
-                  {new Date(m.created_at).toISOString().split("T")[0]}
+                <td className="p-5 border-4 border-black italic font-normal text-sm">{m.description}</td>
+                <td className="p-5 border-4 border-black text-purple-600">
+                  {m.created_at}
                 </td>
-                <td className="p-5 text-center">
+                <td className="p-5 text-center border-4 border-black">
                   <button
                     onClick={() => handleDelete(m.id)}
-                    className="text-slate-400 hover:text-rose-600 transition-all p-2 rounded-lg hover:bg-rose-50"
+                    className="bg-red-500 text-white font-black p-4 border-4 border-black hover:bg-black hover:text-red-500 transition-all active:scale-75"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+                    DELETE ME
                   </button>
                 </td>
               </tr>
@@ -286,19 +282,19 @@ export default function Dashboard() {
   );
 }
 
-const KpiCard = ({ title, value, accent }) => (
-  <div className={`bg-white p-6 rounded-xl shadow-sm border border-slate-200 border-l-4 ${accent}`}>
-    <p className="text-slate-400 text-[11px] font-bold uppercase tracking-widest">{title}</p>
-    <h2 className="text-4xl font-extrabold mt-2 text-slate-900 tracking-tight">
-      <CountUp end={value} duration={1.5} />
+const KpiCard = ({ title, value, color }) => (
+  <div className={`${color} p-6 border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] -rotate-2 hover:rotate-0 transition-transform`}>
+    <p className="font-black text-black uppercase tracking-tighter text-sm underline decoration-black underline-offset-4">{title}</p>
+    <h2 className="text-6xl font-black mt-2 text-black">
+      <CountUp end={value} duration={2} />
     </h2>
   </div>
 );
 
-const KpiText = ({ title, value, accent }) => (
-  <div className={`bg-white p-6 rounded-xl shadow-sm border border-slate-200 border-l-4 ${accent}`}>
-    <p className="text-slate-400 text-[11px] font-bold uppercase tracking-widest">{title}</p>
-    <h2 className="text-lg font-bold mt-2 text-slate-800 truncate leading-tight">
+const KpiText = ({ title, value, color }) => (
+  <div className={`${color} p-6 border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] rotate-2 hover:rotate-0 transition-transform`}>
+    <p className="font-black text-black uppercase tracking-tighter text-sm underline decoration-black underline-offset-4">{title}</p>
+    <h2 className="text-2xl font-black mt-2 text-white drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] uppercase">
       {value}
     </h2>
   </div>
@@ -307,21 +303,21 @@ const KpiText = ({ title, value, accent }) => (
 const Input = (props) => (
   <input
     {...props}
-    className="border border-slate-200 px-4 py-3 rounded-lg focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:outline-none shadow-inner text-sm text-slate-700 w-full transition-all"
+    className="border-4 border-black px-4 py-3 bg-white focus:bg-yellow-50 focus:outline-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-lg font-bold w-full"
   />
 );
 
 const Button = ({ children, color, ...props }) => {
   const colors = {
-    blue: "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200 hover:shadow-lg hover:-translate-y-0.5",
-    gray: "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 hover:shadow-md",
-    dark: "bg-slate-900 hover:bg-black text-white shadow-slate-300 hover:shadow-xl hover:-translate-y-0.5",
+    blue: "bg-green-500 text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none",
+    gray: "bg-red-400 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none",
+    dark: "bg-black text-yellow-300 shadow-[8px_8px_0px_0px_rgba(255,0,255,1)] hover:scale-105",
   };
 
   return (
     <button
       {...props}
-      className={`${colors[color]} px-6 py-3 rounded-lg font-bold text-sm transition-all active:scale-95 whitespace-nowrap`}
+      className={`${colors[color]} px-8 py-4 font-black uppercase text-lg transition-all border-4 border-black`}
     >
       {children}
     </button>
@@ -329,11 +325,12 @@ const Button = ({ children, color, ...props }) => {
 };
 
 const ChartCard = ({ title, children }) => (
-  <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-200">
-    <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.25em] mb-8 flex items-center gap-2">
-      <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+  <div className="bg-white p-8 border-4 border-black shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]">
+    <h3 className="text-2xl font-black text-black uppercase mb-8 border-b-4 border-black pb-2 italic">
       {title}
     </h3>
-    {children}
+    <div className="bg-slate-50 p-4 border-2 border-dashed border-black">
+        {children}
+    </div>
   </div>
 );
