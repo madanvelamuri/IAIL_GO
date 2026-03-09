@@ -2,14 +2,7 @@ import React, { useEffect, useState } from "react";
 import API from "../services/api";
 import CountUp from "react-countup";
 import { Bar, Line } from "react-chartjs-2";
-import {
-  Search,
-  RotateCcw,
-  Download,
-  Trash2,
-  LayoutDashboard,
-  Eye
-} from "lucide-react";
+import { Search, RotateCcw, Download, Trash2, LayoutDashboard, Eye } from "lucide-react";
 
 import {
   Chart as ChartJS,
@@ -33,6 +26,9 @@ ChartJS.register(
   Legend,
   Filler
 );
+
+/* CHANGE THIS IF YOUR BACKEND PORT IS DIFFERENT */
+const BACKEND_URL = "http://localhost:5000";
 
 export default function Dashboard() {
 
@@ -67,17 +63,13 @@ export default function Dashboard() {
 
     if (filters.employee) {
       data = data.filter(m =>
-        m.employee_name
-          .toLowerCase()
-          .includes(filters.employee.toLowerCase())
+        m.employee_name.toLowerCase().includes(filters.employee.toLowerCase())
       );
     }
 
     if (filters.type) {
       data = data.filter(m =>
-        m.mistake_type
-          .toLowerCase()
-          .includes(filters.type.toLowerCase())
+        m.mistake_type.toLowerCase().includes(filters.type.toLowerCase())
       );
     }
 
@@ -139,37 +131,27 @@ export default function Dashboard() {
       `"${m.employee_name}"`,
       `"${m.mistake_type}"`,
       `"${m.description}"`,
-      `"${new Date(m.created_at)
-        .toISOString()
-        .split("T")[0]}"`
+      `"${new Date(m.created_at).toISOString().split("T")[0]}"`
     ]);
 
     const csvContent = [headers, ...rows]
       .map(e => e.join(","))
       .join("\n");
 
-    const blob = new Blob(
-      [csvContent],
-      { type: "text/csv;charset=utf-8;" }
-    );
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
 
     const link = document.createElement("a");
 
     const url = URL.createObjectURL(blob);
 
     link.setAttribute("href", url);
-
     link.setAttribute(
       "download",
-      `mistakes_report_${
-        new Date().toISOString().split("T")[0]
-      }.csv`
+      `mistakes_report_${new Date().toISOString().split("T")[0]}.csv`
     );
 
     document.body.appendChild(link);
-
     link.click();
-
     document.body.removeChild(link);
   };
 
@@ -212,9 +194,9 @@ export default function Dashboard() {
   const monthly = {};
 
   filteredData.forEach(m => {
-
-    const month = new Date(m.created_at)
-      .toLocaleString("default", { month: "short" });
+    const month = new Date(m.created_at).toLocaleString("default", {
+      month: "short"
+    });
 
     monthly[month] = (monthly[month] || 0) + 1;
   });
@@ -248,49 +230,33 @@ export default function Dashboard() {
 
     <div className="min-h-screen bg-[#f8fafc] p-6 lg:p-10 space-y-8">
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between">
+      <div className="flex justify-between">
 
-        <div>
-
-          <div className="flex items-center gap-2 mb-1">
-
-            <LayoutDashboard className="w-6 h-6 text-blue-600" />
-
-            <h1 className="text-3xl font-bold">
-              Analytics Dashboard
-            </h1>
-
-          </div>
-
-          <p className="text-slate-500">
-            Mistake tracking insights
-          </p>
-
+        <div className="flex items-center gap-2">
+          <LayoutDashboard className="w-6 h-6 text-blue-600" />
+          <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
         </div>
 
         <button
           onClick={handleExportCSV}
           className="bg-emerald-600 text-white px-5 py-2 rounded-xl flex items-center"
         >
-          <Download className="w-4 h-4 mr-2" />
+          <Download className="w-4 h-4 mr-2"/>
           Export CSV
         </button>
 
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-4 gap-6">
 
-        <KpiCard title="Total Mistakes" value={totalMistakes} />
-
-        <KpiCard title="This Month" value={thisMonthCount} />
-
-        <KpiText title="Most Mistake Type" value={topMistake} />
-
-        <KpiText title="Top Employee" value={topEmployee} />
+        <KpiCard title="Total Mistakes" value={totalMistakes}/>
+        <KpiCard title="This Month" value={thisMonthCount}/>
+        <KpiText title="Most Mistake Type" value={topMistake}/>
+        <KpiText title="Top Employee" value={topEmployee}/>
 
       </div>
 
-      <div className="bg-white p-5 rounded-2xl shadow-sm border flex flex-wrap gap-4">
+      <div className="bg-white p-5 rounded-xl flex gap-4">
 
         <Input
           type="date"
@@ -312,10 +278,7 @@ export default function Dashboard() {
           placeholder="Employee"
           value={filters.employee}
           onChange={e =>
-            setFilters({
-              ...filters,
-              employee: e.target.value
-            })
+            setFilters({ ...filters, employee: e.target.value })
           }
         />
 
@@ -331,7 +294,7 @@ export default function Dashboard() {
           onClick={handleSearch}
           className="bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center"
         >
-          <Search className="w-4 h-4 mr-2" />
+          <Search className="w-4 h-4 mr-2"/>
           Search
         </button>
 
@@ -339,38 +302,38 @@ export default function Dashboard() {
           onClick={handleReset}
           className="bg-gray-200 px-4 py-2 rounded-xl flex items-center"
         >
-          <RotateCcw className="w-4 h-4 mr-2" />
+          <RotateCcw className="w-4 h-4 mr-2"/>
           Reset
         </button>
 
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-2 gap-8">
 
         <ChartCard title="Monthly Trend">
-          <Line data={trendData} />
+          <Line data={trendData}/>
         </ChartCard>
 
         <ChartCard title="Mistake Type Distribution">
-          <Bar data={barData} />
+          <Bar data={barData}/>
         </ChartCard>
 
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
+      <div className="bg-white rounded-xl overflow-hidden">
 
         <table className="w-full">
 
-          <thead className="bg-slate-50 text-xs uppercase">
+          <thead className="bg-gray-50">
 
             <tr>
-              <th className="px-6 py-4">Claim</th>
-              <th className="px-6 py-4">Employee</th>
-              <th className="px-6 py-4">Type</th>
-              <th className="px-6 py-4">Description</th>
-              <th className="px-6 py-4">Date</th>
-              <th className="px-6 py-4">Screenshot</th>
-              <th className="px-6 py-4 text-center">Action</th>
+              <th className="p-4">Claim</th>
+              <th className="p-4">Employee</th>
+              <th className="p-4">Type</th>
+              <th className="p-4">Description</th>
+              <th className="p-4">Date</th>
+              <th className="p-4">Screenshot</th>
+              <th className="p-4">Action</th>
             </tr>
 
           </thead>
@@ -379,54 +342,52 @@ export default function Dashboard() {
 
             {filteredData.map(m => (
 
-              <tr key={m.id}>
+              <tr key={m.id} className="border-t">
 
-                <td className="px-6 py-4 text-blue-600 font-semibold">
+                <td className="p-4 text-blue-600 font-semibold">
                   {m.claim_id}
                 </td>
 
-                <td className="px-6 py-4">
-                  {m.employee_name}
-                </td>
+                <td className="p-4">{m.employee_name}</td>
 
-                <td className="px-6 py-4">
-                  {m.mistake_type}
-                </td>
+                <td className="p-4">{m.mistake_type}</td>
 
-                <td className="px-6 py-4">
-                  {m.description}
-                </td>
+                <td className="p-4">{m.description}</td>
 
-                <td className="px-6 py-4">
+                <td className="p-4">
                   {new Date(m.created_at).toLocaleDateString()}
                 </td>
 
-                <td className="px-6 py-4">
+                <td className="p-4">
 
                   {m.screenshot_url ? (
+
                     <button
                       onClick={() =>
-                        setViewImage(m.screenshot_url)
+                        setViewImage(
+                          `${BACKEND_URL}/${m.screenshot_url}`
+                        )
                       }
                       className="flex items-center gap-1 text-blue-600"
                     >
-                      <Eye className="w-5 h-5" />
+                      <Eye className="w-5 h-5"/>
                       View
                     </button>
+
                   ) : (
                     <span className="text-gray-400">
-                      👁
+                      No Image
                     </span>
                   )}
 
                 </td>
 
-                <td className="px-6 py-4 text-center">
+                <td className="p-4">
 
                   <button
                     onClick={() => handleDelete(m.id)}
                   >
-                    <Trash2 className="w-5 h-5 text-red-600" />
+                    <Trash2 className="w-5 h-5 text-red-600"/>
                   </button>
 
                 </td>
@@ -471,30 +432,27 @@ export default function Dashboard() {
 }
 
 const KpiCard = ({ title, value }) => (
-  <div className="bg-white p-6 rounded-2xl shadow">
+  <div className="bg-white p-6 rounded-xl shadow">
     <p className="text-xs text-gray-400">{title}</p>
     <h2 className="text-3xl font-bold">
-      <CountUp end={value} />
+      <CountUp end={value}/>
     </h2>
   </div>
 );
 
 const KpiText = ({ title, value }) => (
-  <div className="bg-white p-6 rounded-2xl shadow">
+  <div className="bg-white p-6 rounded-xl shadow">
     <p className="text-xs text-gray-400">{title}</p>
     <h2 className="text-lg font-bold">{value}</h2>
   </div>
 );
 
 const Input = props => (
-  <input
-    {...props}
-    className="border px-3 py-2 rounded-xl"
-  />
+  <input {...props} className="border px-3 py-2 rounded-xl"/>
 );
 
 const ChartCard = ({ title, children }) => (
-  <div className="bg-white p-6 rounded-2xl shadow">
+  <div className="bg-white p-6 rounded-xl shadow">
     <h3 className="mb-4 font-bold">{title}</h3>
     {children}
   </div>
