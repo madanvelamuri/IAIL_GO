@@ -1,482 +1,372 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import API from "../services/api";
 import CountUp from "react-countup";
 import { Bar, Line } from "react-chartjs-2";
-import { Search, RotateCcw, Download, Trash2, LayoutDashboard, Eye } from "lucide-react";
+import { Search, RotateCcw, Download, Trash2, LayoutDashboard, Eye, ZoomIn, ZoomOut, Maximize, X } from "lucide-react";
 
 import {
-Chart as ChartJS,
-CategoryScale,
-LinearScale,
-PointElement,
-LineElement,
-BarElement,
-Tooltip,
-Legend,
-Filler
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Tooltip,
+  Legend,
+  Filler
 } from "chart.js";
 
 ChartJS.register(
-CategoryScale,
-LinearScale,
-PointElement,
-LineElement,
-BarElement,
-Tooltip,
-Legend,
-Filler
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Tooltip,
+  Legend,
+  Filler
 );
 
 const BACKEND_URL = "https://iailgo-production.up.railway.app";
 
 export default function Dashboard() {
-
-const [mistakes, setMistakes] = useState([]);
-const [filteredData, setFilteredData] = useState([]);
-const [viewImage, setViewImage] = useState(null);
-
-const [filters, setFilters] = useState({
-from: "",
-to: "",
-employee: "",
-type: ""
-});
-
-/* Pagination */
-const [currentPage, setCurrentPage] = useState(1);
-const rowsPerPage = 10;
-
-useEffect(() => {
-fetchMistakes();
-}, []);
-
-const fetchMistakes = async () => {
-try {
-const res = await API.get("/mistakes");
-setMistakes(res.data);
-setFilteredData(res.data);
-} catch (err) {
-console.error("Fetch error:", err);
-}
-};
-
-const handleSearch = () => {
-
-let data = [...mistakes];
-
-if (filters.employee) {
-data = data.filter(m =>
-m.employee_name.toLowerCase().includes(filters.employee.toLowerCase())
-);
-}
-
-if (filters.type) {
-data = data.filter(m =>
-m.mistake_type.toLowerCase().includes(filters.type.toLowerCase())
-);
-}
-
-if (filters.from) {
-data = data.filter(
-m => new Date(m.created_at) >= new Date(filters.from)
-);
-}
-
-if (filters.to) {
-data = data.filter(
-m => new Date(m.created_at) <= new Date(filters.to)
-);
-}
-
-setFilteredData(data);
-setCurrentPage(1);
-
-};
-
-const handleReset = () => {
-setFilters({
-from: "",
-to: "",
-employee: "",
-type: ""
-});
-setFilteredData(mistakes);
-setCurrentPage(1);
-};
-
-const handleDelete = async (id) => {
-
-if (!window.confirm("Delete this record?")) return;
-
-try {
-await API.delete(`/mistakes/${id}`);
-fetchMistakes();
-} catch (err) {
-console.error("Delete failed:", err);
-}
-
-};
-
-const handleExportCSV = () => {
-
-if (filteredData.length === 0) {
-alert("No data to export");
-return;
-}
-
-const headers = [
-"Claim ID",
-"Employee Name",
-"Mistake Type",
-"Description",
-"Created Date"
-];
-
-const rows = filteredData.map(m => [
-`="${m.claim_id}"`,
-`"${m.employee_name}"`,
-`"${m.mistake_type}"`,
-`"${m.description}"`,
-`"${new Date(m.created_at).toISOString().split("T")[0]}"`
-]);
-
-const csvContent = [headers, ...rows]
-.map(e => e.join(","))
-.join("\n");
-
-const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-
-const link = document.createElement("a");
-
-const url = URL.createObjectURL(blob);
-
-link.setAttribute("href", url);
-link.setAttribute(
-"download",
-`mistakes_report_${new Date().toISOString().split("T")[0]}.csv`
-);
-
-document.body.appendChild(link);
-link.click();
-document.body.removeChild(link);
-
-};
-
-const totalMistakes = filteredData.length;
-
-const thisMonth = new Date().getMonth();
-
-const thisMonthCount = filteredData.filter(
-m => new Date(m.created_at).getMonth() === thisMonth
-).length;
-
-const typeFrequency = {};
-
-filteredData.forEach(m => {
-typeFrequency[m.mistake_type] =
-(typeFrequency[m.mistake_type] || 0) + 1;
-});
-
-const topMistake =
-Object.keys(typeFrequency).length > 0
-? Object.keys(typeFrequency).reduce((a, b) =>
-typeFrequency[a] > typeFrequency[b] ? a : b
-)
-: "-";
-
-const employeeFrequency = {};
-
-filteredData.forEach(m => {
-employeeFrequency[m.employee_name] =
-(employeeFrequency[m.employee_name] || 0) + 1;
-});
-
-const topEmployee =
-Object.keys(employeeFrequency).length > 0
-? Object.keys(employeeFrequency).reduce((a, b) =>
-employeeFrequency[a] > employeeFrequency[b] ? a : b
-)
-: "-";
-
-const monthly = {};
-
-filteredData.forEach(m => {
-const month = new Date(m.created_at).toLocaleString("default", {
-month: "short"
-});
-monthly[month] = (monthly[month] || 0) + 1;
-});
-
-const trendData = {
-labels: Object.keys(monthly),
-datasets: [
-{
-label: "Monthly Mistakes",
-data: Object.values(monthly),
-borderColor: "#3b82f6",
-backgroundColor: "rgba(59,130,246,0.2)",
-tension: 0.4,
-fill: true
-}
-]
-};
-
-const barData = {
-labels: Object.keys(typeFrequency),
-datasets: [
-{
-label: "Mistake Count",
-data: Object.values(typeFrequency),
-backgroundColor: "#10b981"
-}
-]
-};
-
-/* Pagination Logic */
-
-const indexOfLastRow = currentPage * rowsPerPage;
-const indexOfFirstRow = indexOfLastRow - rowsPerPage;
-const currentRows = filteredData.slice(indexOfFirstRow, indexOfLastRow);
-const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-
-return (
-
-<div className="min-h-screen bg-[#f8fafc] p-6 lg:p-10 space-y-8">
-
-<div className="flex justify-between">
-
-<div className="flex items-center gap-2">
-<LayoutDashboard className="w-6 h-6 text-blue-600" />
-<h1 className="text-3xl font-bold">📊 Analytics Dashboard</h1>
-</div>
-
-<button
-onClick={handleExportCSV}
-className="bg-emerald-600 text-white px-5 py-2 rounded-xl flex items-center gap-2 transition shadow-md hover:shadow-lg active:scale-95 active:shadow-inner duration-150"
->
-📥 <Download className="w-4 h-4"/>
-Export CSV
-</button>
-
-</div>
-
-<div className="grid grid-cols-4 gap-6">
-<KpiCard title="Total Mistakes" value={totalMistakes}/>
-<KpiCard title="This Month" value={thisMonthCount}/>
-<KpiText title="Most of Mistakes in" value={topMistake}/>
-<KpiText title="Most of Mistakes Done By" value={topEmployee}/>
-</div>
-
-<div className="bg-white p-5 rounded-xl shadow-md flex gap-4">
-
-<Input type="date" value={filters.from}
-onChange={e => setFilters({ ...filters, from: e.target.value })}/>
-
-<Input type="date" value={filters.to}
-onChange={e => setFilters({ ...filters, to: e.target.value })}/>
-
-<Input placeholder="Employee"
-value={filters.employee}
-onChange={e => setFilters({ ...filters, employee: e.target.value })}/>
-
-<Input placeholder="Mistake Type"
-value={filters.type}
-onChange={e => setFilters({ ...filters, type: e.target.value })}/>
-
-<button
-onClick={handleSearch}
-className="bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition shadow-md hover:shadow-lg active:scale-95 active:shadow-inner duration-150"
->
-🔍 <Search className="w-4 h-4"/> Search
-</button>
-
-<button
-onClick={handleReset}
-className="bg-gray-200 px-4 py-2 rounded-xl flex items-center gap-2 transition shadow-md hover:shadow-lg active:scale-95 active:shadow-inner duration-150"
->
-🔄 <RotateCcw className="w-4 h-4"/> Reset
-</button>
-
-</div>
-
-<div className="grid grid-cols-2 gap-8">
-
-<ChartCard title="📈 Monthly Trend">
-<Line data={trendData}/>
-</ChartCard>
-
-<ChartCard title="📊 Mistake Type Distribution">
-<Bar data={barData}/>
-</ChartCard>
-
-</div>
-
-<div className="bg-white rounded-xl shadow-md overflow-hidden">
-
-<table className="w-full">
-
-<thead className="bg-gray-50">
-<tr>
-<th className="p-4">Claim</th>
-<th className="p-4">Employee</th>
-<th className="p-4">Type</th>
-<th className="p-4">Description</th>
-<th className="p-4">Date</th>
-<th className="p-4">Action</th>
-</tr>
-</thead>
-
-<tbody>
-
-{currentRows.map(m => (
-
-<tr key={m.id} className="border-t hover:bg-gray-50 transition">
-
-<td className="p-4 text-blue-600 font-semibold">{m.claim_id}</td>
-<td className="p-4">{m.employee_name}</td>
-<td className="p-4">{m.mistake_type}</td>
-<td className="p-4">{m.description}</td>
-<td className="p-4">{new Date(m.created_at).toLocaleDateString()}</td>
-
-<td className="p-4">
-
-<div className="flex flex-col items-center gap-2">
-
-<button
-onClick={() => handleDelete(m.id)}
-className="flex items-center gap-2 px-3 py-1 bg-red-100 text-red-700 rounded transition shadow-md hover:shadow-lg hover:bg-red-200 active:scale-95"
->
-🗑️ <Trash2 className="w-4 h-4"/>
-</button>
-
-{m.screenshot_url && (
-<button
-onClick={() => setViewImage(`${BACKEND_URL}${m.screenshot_url}`)}
-className="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded transition shadow-md hover:shadow-lg hover:bg-blue-200 active:scale-95"
->
-👁️ <Eye className="w-4 h-4"/>
-</button>
-)}
-
-</div>
-
-</td>
-
-</tr>
-
-))}
-
-</tbody>
-
-</table>
-
-{/* Pagination */}
-
-<div className="flex justify-center items-center gap-3 p-4">
-
-<button
-onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-disabled={currentPage === 1}
-className="px-3 py-1 bg-gray-200 rounded"
->
-⬅
-</button>
-
-<span className="font-semibold">
-Page {currentPage} / {totalPages}
-</span>
-
-<button
-onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-disabled={currentPage === totalPages}
-className="px-3 py-1 bg-gray-200 rounded"
->
-➡
-</button>
-
-</div>
-
-</div>
-
-{/* IMAGE MODAL */}
-
-{viewImage && (
-
-<div
-className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
-onClick={() => setViewImage(null)}
->
-
-<div
-className="relative bg-white p-4 rounded-xl shadow-2xl animate-zoomIn"
-onClick={(e) => e.stopPropagation()}
->
-
-<button
-onClick={() => setViewImage(null)}
-className="absolute top-2 right-3 text-2xl"
->
-❌
-</button>
-
-<img
-src={viewImage}
-alt="Screenshot"
-className="max-h-[80vh] rounded-lg"
-/>
-
-</div>
-
-</div>
-
-)}
-
-</div>
-
-);
+  const [mistakes, setMistakes] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [viewImage, setViewImage] = useState(null);
+
+  /* Zoom State */
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  const [filters, setFilters] = useState({
+    from: "",
+    to: "",
+    employee: "",
+    type: ""
+  });
+
+  /* Pagination */
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+
+  useEffect(() => {
+    fetchMistakes();
+  }, []);
+
+  const fetchMistakes = async () => {
+    try {
+      const res = await API.get("/mistakes");
+      setMistakes(res.data);
+      setFilteredData(res.data);
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
+  };
+
+  const handleSearch = () => {
+    let data = [...mistakes];
+    if (filters.employee) {
+      data = data.filter(m =>
+        m.employee_name.toLowerCase().includes(filters.employee.toLowerCase())
+      );
+    }
+    if (filters.type) {
+      data = data.filter(m =>
+        m.mistake_type.toLowerCase().includes(filters.type.toLowerCase())
+      );
+    }
+    if (filters.from) {
+      data = data.filter(
+        m => new Date(m.created_at) >= new Date(filters.from)
+      );
+    }
+    if (filters.to) {
+      data = data.filter(
+        m => new Date(m.created_at) <= new Date(filters.to)
+      );
+    }
+    setFilteredData(data);
+    setCurrentPage(1);
+  };
+
+  const handleReset = () => {
+    setFilters({ from: "", to: "", employee: "", type: "" });
+    setFilteredData(mistakes);
+    setCurrentPage(1);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this record?")) return;
+    try {
+      await API.delete(`/mistakes/${id}`);
+      fetchMistakes();
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (filteredData.length === 0) {
+      alert("No data to export");
+      return;
+    }
+    const headers = ["Claim ID", "Employee Name", "Mistake Type", "Description", "Created Date"];
+    const rows = filteredData.map(m => [
+      `="${m.claim_id}"`,
+      `"${m.employee_name}"`,
+      `"${m.mistake_type}"`,
+      `"${m.description}"`,
+      `"${new Date(m.created_at).toISOString().split("T")[0]}"`
+    ]);
+    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `mistakes_report_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  /* Zoom & Drag Handlers */
+  const handleZoomIn = () => setScale(prev => Math.min(prev + 0.5, 4));
+  const handleZoomOut = () => setScale(prev => Math.max(prev - 0.5, 0.5));
+  const handleResetZoom = () => {
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
+  };
+
+  const handleMouseDown = (e) => {
+    if (scale > 1) {
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging) {
+      setPosition({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y
+      });
+    }
+  };
+
+  const handleMouseUp = () => setIsDragging(false);
+
+  const totalMistakes = filteredData.length;
+  const thisMonth = new Date().getMonth();
+  const thisMonthCount = filteredData.filter(
+    m => new Date(m.created_at).getMonth() === thisMonth
+  ).length;
+
+  const typeFrequency = {};
+  filteredData.forEach(m => {
+    typeFrequency[m.mistake_type] = (typeFrequency[m.mistake_type] || 0) + 1;
+  });
+
+  const topMistake = Object.keys(typeFrequency).length > 0
+    ? Object.keys(typeFrequency).reduce((a, b) => typeFrequency[a] > typeFrequency[b] ? a : b)
+    : "-";
+
+  const employeeFrequency = {};
+  filteredData.forEach(m => {
+    employeeFrequency[m.employee_name] = (employeeFrequency[m.employee_name] || 0) + 1;
+  });
+
+  const topEmployee = Object.keys(employeeFrequency).length > 0
+    ? Object.keys(employeeFrequency).reduce((a, b) => employeeFrequency[a] > employeeFrequency[b] ? a : b)
+    : "-";
+
+  const monthly = {};
+  filteredData.forEach(m => {
+    const month = new Date(m.created_at).toLocaleString("default", { month: "short" });
+    monthly[month] = (monthly[month] || 0) + 1;
+  });
+
+  const trendData = {
+    labels: Object.keys(monthly),
+    datasets: [{
+      label: "Monthly Mistakes",
+      data: Object.values(monthly),
+      borderColor: "#3b82f6",
+      backgroundColor: "rgba(59,130,246,0.1)",
+      tension: 0.4,
+      fill: true,
+    }]
+  };
+
+  const barData = {
+    labels: Object.keys(typeFrequency),
+    datasets: [{
+      label: "Mistake Count",
+      data: Object.values(typeFrequency),
+      backgroundColor: "#10b981",
+    }]
+  };
+
+  const indexOfLastRow = currentPage * rowsPerPage;
+  const indexOfFirstRow = indexOfLastRow - rowsPerPage;
+  const currentRows = filteredData.slice(indexOfFirstRow, indexOfLastRow);
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
+
+  return (
+    <div className="min-h-screen bg-[#f1f5f9] p-6 lg:p-10 space-y-8 font-sans">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <LayoutDashboard className="w-6 h-6 text-blue-600" />
+          <h1 className="text-3xl font-extrabold text-slate-800">📊 Analytics Dashboard</h1>
+        </div>
+        <button onClick={handleExportCSV} className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-md hover:bg-emerald-700 transition">
+          <Download className="w-4 h-4"/> 📥 Export CSV
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <KpiCard title="Total Mistakes" value={totalMistakes} icon="📈" />
+        <KpiCard title="This Month" value={thisMonthCount} icon="📅" />
+        <KpiText title="Most of Mistakes in" value={topMistake} icon="⚠️" />
+        <KpiText title="Most of Mistakes Done By" value={topEmployee} icon="👤" />
+      </div>
+
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap gap-4">
+        <Input type="date" value={filters.from} onChange={e => setFilters({ ...filters, from: e.target.value })}/>
+        <Input type="date" value={filters.to} onChange={e => setFilters({ ...filters, to: e.target.value })}/>
+        <Input placeholder="👤 Employee Name" value={filters.employee} onChange={e => setFilters({ ...filters, employee: e.target.value })}/>
+        <Input placeholder="🔍 Mistake Type" value={filters.type} onChange={e => setFilters({ ...filters, type: e.target.value })}/>
+        <button onClick={handleSearch} className="bg-blue-600 text-white px-6 py-2 rounded-xl flex items-center gap-2 hover:bg-blue-700">
+          <Search className="w-4 h-4"/> Search
+        </button>
+        <button onClick={handleReset} className="bg-slate-100 text-slate-600 px-6 py-2 rounded-xl flex items-center gap-2 hover:bg-slate-200">
+          <RotateCcw className="w-4 h-4"/> Reset
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <ChartCard title="📈 Monthly Trend"><Line data={trendData}/></ChartCard>
+        <ChartCard title="📊 Mistake Type Distribution"><Bar data={barData}/></ChartCard>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <table className="w-full text-left">
+          <thead className="bg-slate-50 border-b">
+            <tr>
+              <th className="p-4">📑 Claim</th>
+              <th className="p-4">👤 Employee</th>
+              <th className="p-4">🏷️ Type</th>
+              <th className="p-4">📝 Description</th>
+              <th className="p-4">🗓️ Date</th>
+              <th className="p-4 text-center">⚙️ Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentRows.map(m => (
+              <tr key={m.id} className="border-t hover:bg-slate-50 transition">
+                <td className="p-4 text-blue-600 font-bold">#{m.claim_id}</td>
+                <td className="p-4 font-medium">{m.employee_name}</td>
+                <td className="p-4"><span className="bg-slate-100 px-2 py-1 rounded text-xs font-bold uppercase">{m.mistake_type}</span></td>
+                <td className="p-4 text-slate-500 text-sm truncate max-w-[200px]">{m.description}</td>
+                <td className="p-4 text-slate-500 text-sm">{new Date(m.created_at).toLocaleDateString()}</td>
+                <td className="p-4">
+                  <div className="flex justify-center gap-2">
+                    {m.screenshot_url && (
+                      <button onClick={() => setViewImage(`${BACKEND_URL}${m.screenshot_url}`)} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition">
+                        <Eye className="w-4 h-4"/>
+                      </button>
+                    )}
+                    <button onClick={() => handleDelete(m.id)} className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition">
+                      <Trash2 className="w-4 h-4"/>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* PAGINATION */}
+        <div className="flex justify-between items-center p-4 bg-slate-50 border-t">
+          <p className="text-sm text-slate-500">Page {currentPage} of {totalPages}</p>
+          <div className="flex gap-2">
+            <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1} className="px-4 py-1 bg-white border rounded hover:bg-gray-50 disabled:opacity-50">⬅</button>
+            <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages} className="px-4 py-1 bg-white border rounded hover:bg-gray-50 disabled:opacity-50">➡</button>
+          </div>
+        </div>
+      </div>
+
+      {/* ZOOMABLE IMAGE MODAL */}
+      {viewImage && (
+        <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-sm flex flex-col items-center justify-center z-50 p-4">
+          
+          {/* Controls Bar */}
+          <div className="absolute top-6 flex items-center gap-4 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/20 z-50">
+            <button onClick={handleZoomOut} className="text-white hover:text-blue-400 transition" title="Zoom Out"><ZoomOut /></button>
+            <span className="text-white font-mono w-12 text-center">{Math.round(scale * 100)}%</span>
+            <button onClick={handleZoomIn} className="text-white hover:text-blue-400 transition" title="Zoom In"><ZoomIn /></button>
+            <div className="w-px h-6 bg-white/20 mx-2" />
+            <button onClick={handleResetZoom} className="text-white hover:text-blue-400 transition" title="Reset"><Maximize /></button>
+            <button onClick={() => { setViewImage(null); handleResetZoom(); }} className="text-white hover:text-red-400 transition ml-2" title="Close"><X /></button>
+          </div>
+
+          <div 
+            className={`relative overflow-hidden w-full h-full flex items-center justify-center cursor-${scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default'}`}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+          >
+            <img
+              src={viewImage}
+              alt="Screenshot"
+              style={{
+                transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+                maxHeight: '85vh',
+                maxWidth: '90vw',
+                objectFit: 'contain'
+              }}
+              draggable="false"
+              className="rounded-lg shadow-2xl"
+            />
+          </div>
+
+          <p className="absolute bottom-6 text-white/50 text-sm">Use controls above to zoom • Drag to move when zoomed</p>
+        </div>
+      )}
+    </div>
+  );
 }
 
-const KpiCard = ({ title, value }) => (
-
-<div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition">
-
-<p className="text-xs text-gray-400 flex items-center gap-1">
-📊 {title}
-</p>
-
-<h2 className="text-3xl font-bold">
-<CountUp end={value}/>
-</h2>
-
-</div>
+const KpiCard = ({ title, value, icon }) => (
+  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition group">
+    <div className="flex justify-between items-start mb-2">
+      <p className="text-xs font-bold text-slate-400 uppercase">{title}</p>
+      <span className="text-xl group-hover:scale-110 transition">{icon}</span>
+    </div>
+    <h2 className="text-4xl font-black text-slate-800"><CountUp end={value}/></h2>
+  </div>
 );
 
-const KpiText = ({ title, value }) => (
-
-<div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition">
-
-<p className="text-xs text-gray-400 flex items-center gap-1">
-📌 {title}
-</p>
-
-<h2 className="text-lg font-bold">{value}</h2>
-
-</div>
+const KpiText = ({ title, value, icon }) => (
+  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition group">
+    <div className="flex justify-between items-start mb-2">
+      <p className="text-xs font-bold text-slate-400 uppercase">{title}</p>
+      <span className="text-xl group-hover:scale-110 transition">{icon}</span>
+    </div>
+    <h2 className="text-xl font-bold text-slate-700 truncate" title={value}>{value}</h2>
+  </div>
 );
 
 const Input = props => (
-<input {...props} className="border px-3 py-2 rounded-xl"/>
+  <input {...props} className="border border-slate-200 bg-slate-50 px-4 py-2 rounded-xl focus:ring-4 focus:ring-blue-100 outline-none transition flex-1 min-w-[180px]"/>
 );
 
 const ChartCard = ({ title, children }) => (
-
-<div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition">
-
-<h3 className="mb-4 font-bold flex items-center gap-2">
-📉 {title}
-</h3>
-
-{children}
-
-</div>
+  <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+    <h3 className="mb-6 font-bold text-slate-800 text-lg">{title}</h3>
+    <div className="h-[300px]">{children}</div>
+  </div>
 );
