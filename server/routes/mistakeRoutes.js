@@ -13,7 +13,7 @@ const fs = require("fs");
 const uploadPath = path.join(__dirname, "../uploads");
 
 if (!fs.existsSync(uploadPath)) {
-  fs.mkdirSync(uploadPath);
+ fs.mkdirSync(uploadPath, { recursive: true });
 }
 
 // =======================
@@ -69,7 +69,7 @@ router.post(
 
     } catch (err) {
 
-      console.error("INSERT ERROR:", err);
+      console.error("INSERT ERROR:", err.message);
 
       return res.status(500).json({
         message: "Insert failed",
