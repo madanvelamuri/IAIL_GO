@@ -89,7 +89,7 @@ export default function Dashboard() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this record?")) return;
+    if (!window.confirm("Are you sure you want to delete this record?")) return;
 
     try {
       await API.delete(`/mistakes/${id}`);
@@ -135,7 +135,7 @@ export default function Dashboard() {
     link.setAttribute("href", url);
     link.setAttribute(
       "download",
-      `mistakes_report_${new Date().toISOString().split("T")[0]}.csv`
+      `report_${new Date().toISOString().split("T")[0]}.csv`
     );
 
     document.body.appendChild(link);
@@ -161,7 +161,7 @@ export default function Dashboard() {
       ? Object.keys(typeFrequency).reduce((a, b) =>
           typeFrequency[a] > typeFrequency[b] ? a : b
         )
-      : "-";
+      : "N/A";
 
   const employeeFrequency = {};
   filteredData.forEach((m) => {
@@ -174,7 +174,7 @@ export default function Dashboard() {
       ? Object.keys(employeeFrequency).reduce((a, b) =>
           employeeFrequency[a] > employeeFrequency[b] ? a : b
         )
-      : "-";
+      : "N/A";
 
   const monthly = {};
   filteredData.forEach((m) => {
@@ -188,11 +188,11 @@ export default function Dashboard() {
     labels: Object.keys(monthly),
     datasets: [
       {
-        label: "Monthly Mistakes 📉",
+        label: "Monthly Incidents",
         data: Object.values(monthly),
-        borderColor: "#2563eb",
-        backgroundColor: "rgba(37,99,235,0.15)",
-        tension: 0.4,
+        borderColor: "#0f172a",
+        backgroundColor: "rgba(15, 23, 42, 0.05)",
+        tension: 0.2,
         fill: true,
       },
     ],
@@ -202,89 +202,101 @@ export default function Dashboard() {
     labels: Object.keys(typeFrequency),
     datasets: [
       {
-        label: "Mistake Count 🐞",
+        label: "Incident Frequency",
         data: Object.values(typeFrequency),
-        backgroundColor: "#16a34a",
+        backgroundColor: "#3b82f6",
       },
     ],
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-200 p-10 space-y-12">
-
-      <div>
-        <h1 className="text-4xl font-extrabold text-slate-800">
-          📊 Analytics Dashboard
+    <div className="min-h-screen bg-slate-50 p-8 space-y-8">
+      {/* Header */}
+      <div className="border-b border-slate-200 pb-6">
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+          Operational Analytics
         </h1>
-        <p className="text-slate-500 mt-2">
-          Mistake tracking insights & performance overview 🚀
+        <p className="text-slate-500 mt-1">
+          Comprehensive error tracking and performance metrics.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        <KpiCard title="Total Mistakes 🐞" value={totalMistakes} color="text-blue-600" />
-        <KpiCard title="This Month 📅" value={thisMonthCount} color="text-indigo-600" />
-        <KpiText title="Most of Mistakes Done in 🔥" value={topMistake} color="text-red-600" />
-        <KpiText title="Mostly Mistake Done By 🧑‍💻" value={topEmployee} color="text-green-600" />
+      {/* KPI Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <KpiCard title="Total Incidents" value={totalMistakes} />
+        <KpiCard title="Current Month" value={thisMonthCount} />
+        <KpiText title="Primary Incident Type" value={topMistake} />
+        <KpiText title="Lead Employee" value={topEmployee} />
       </div>
 
-      <div className="bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-2xl shadow-slate-300/40 border border-white flex flex-wrap gap-4">
-        <Input type="date" value={filters.from}
-          onChange={(e) => setFilters({ ...filters, from: e.target.value })} />
-
-        <Input type="date" value={filters.to}
-          onChange={(e) => setFilters({ ...filters, to: e.target.value })} />
-
-        <Input type="text" placeholder="Employee 👤"
-          value={filters.employee}
-          onChange={(e) => setFilters({ ...filters, employee: e.target.value })} />
-
-        <Input type="text" placeholder="Mistake Type 🐞"
-          value={filters.type}
-          onChange={(e) => setFilters({ ...filters, type: e.target.value })} />
-
-        <Button onClick={handleSearch} color="blue">🔍 Search</Button>
-        <Button onClick={handleReset} color="gray">♻️ Reset</Button>
-        <Button onClick={handleExportCSV} color="green">📄 Export CSV</Button>
+      {/* Filter Section */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 items-center">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-slate-500 uppercase">From</label>
+          <Input type="date" value={filters.from} onChange={(e) => setFilters({ ...filters, from: e.target.value })} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-slate-500 uppercase">To</label>
+          <Input type="date" value={filters.to} onChange={(e) => setFilters({ ...filters, to: e.target.value })} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-slate-500 uppercase">Employee</label>
+          <Input type="text" placeholder="Search Name" value={filters.employee} onChange={(e) => setFilters({ ...filters, employee: e.target.value })} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-slate-500 uppercase">Type</label>
+          <Input type="text" placeholder="Search Type" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} />
+        </div>
+        
+        <div className="flex gap-2 mt-auto">
+          <Button onClick={handleSearch} color="blue">Apply Filters</Button>
+          <Button onClick={handleReset} color="gray">Reset</Button>
+          <Button onClick={handleExportCSV} color="green">Export CSV</Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        <ChartCard title="Monthly Trend 📈">
-          <Line data={trendData} />
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <ChartCard title="Monthly Incident Trend">
+          <Line data={trendData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
         </ChartCard>
-        <ChartCard title="Mistake Type Distribution 🐞">
-          <Bar data={barData} />
+        <ChartCard title="Incident Distribution by Type">
+          <Bar data={barData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
         </ChartCard>
       </div>
 
-      <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl shadow-slate-300/40 border border-white overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-100 text-slate-600 uppercase text-xs">
+      {/* Data Table */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-slate-50 text-slate-600 font-semibold border-b">
             <tr>
-              <th className="p-4">📌 Claim ID</th>
-              <th className="p-4">👤 Employee</th>
-              <th className="p-4">🐞 Type</th>
-              <th className="p-4">📝 Description</th>
-              <th className="p-4">📅 Date</th>
-              <th className="p-4 text-center">⚙️ Action</th>
+              <th className="p-4">Claim ID</th>
+              <th className="p-4">Employee</th>
+              <th className="p-4">Incident Type</th>
+              <th className="p-4">Description</th>
+              <th className="p-4">Date</th>
+              <th className="p-4 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-slate-100">
             {filteredData.map((m) => (
-              <tr key={m.id} className="border-t hover:bg-blue-50/40 transition-colors">
-                <td className="p-4 font-medium">{m.claim_id}</td>
-                <td className="p-4">{m.employee_name}</td>
-                <td className="p-4">{m.mistake_type}</td>
-                <td className="p-4 text-slate-500">{m.description}</td>
-                <td className="p-4">
-                  {new Date(m.created_at).toISOString().split("T")[0]}
+              <tr key={m.id} className="hover:bg-slate-50 transition-colors">
+                <td className="p-4 font-medium text-slate-900">{m.claim_id}</td>
+                <td className="p-4 text-slate-700">{m.employee_name}</td>
+                <td className="p-4 text-slate-700">{m.mistake_type}</td>
+                <td className="p-4 text-slate-500 max-w-xs truncate">{m.description}</td>
+                <td className="p-4 text-slate-600">
+                  {new Date(m.created_at).toLocaleDateString()}
                 </td>
                 <td className="p-4 text-center">
                   <button
                     onClick={() => handleDelete(m.id)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-lg text-xs shadow-md hover:shadow-lg transition"
+                    className="text-slate-400 hover:text-red-600 transition-colors p-2"
+                    title="Delete Record"
                   >
-                    🗑️
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
                   </button>
                 </td>
               </tr>
@@ -292,25 +304,24 @@ export default function Dashboard() {
           </tbody>
         </table>
       </div>
-
     </div>
   );
 }
 
-const KpiCard = ({ title, value, color }) => (
-  <div className="bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-xl shadow-slate-300/40 border border-white hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
-    <p className="text-slate-500 text-sm">{title}</p>
-    <h2 className={`text-4xl font-bold mt-3 ${color}`}>
-      <CountUp end={value} duration={1.5} /> 😅
+const KpiCard = ({ title, value }) => (
+  <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+    <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">{title}</p>
+    <h2 className="text-3xl font-bold mt-2 text-slate-900">
+      <CountUp end={value} duration={1} />
     </h2>
   </div>
 );
 
-const KpiText = ({ title, value, color }) => (
-  <div className="bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-xl shadow-slate-300/40 border border-white hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
-    <p className="text-slate-500 text-sm">{title}</p>
-    <h2 className={`text-xl font-semibold mt-3 ${color}`}>
-      {value} 😬
+const KpiText = ({ title, value }) => (
+  <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+    <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">{title}</p>
+    <h2 className="text-lg font-semibold mt-2 text-slate-800 truncate">
+      {value}
     </h2>
   </div>
 );
@@ -318,30 +329,31 @@ const KpiText = ({ title, value, color }) => (
 const Input = (props) => (
   <input
     {...props}
-    className="border border-slate-300 px-4 py-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm"
+    className="border border-slate-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm text-sm"
   />
 );
 
 const Button = ({ children, color, ...props }) => {
   const colors = {
     blue: "bg-blue-600 hover:bg-blue-700",
-    gray: "bg-slate-500 hover:bg-slate-600",
-    green: "bg-emerald-600 hover:bg-emerald-700",
+    gray: "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50",
+    green: "bg-slate-900 hover:bg-slate-800",
   };
 
+  const baseClass = "px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm";
+  const colorClass = colors[color] || colors.blue;
+  const textClass = color === "gray" ? "" : "text-white";
+
   return (
-    <button
-      {...props}
-      className={`${colors[color]} text-white px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transition`}
-    >
+    <button {...props} className={`${baseClass} ${colorClass} ${textClass}`}>
       {children}
     </button>
   );
 };
 
 const ChartCard = ({ title, children }) => (
-  <div className="bg-white/90 backdrop-blur-md p-8 rounded-2xl shadow-2xl shadow-slate-300/40 border border-white hover:shadow-3xl transition-all">
-    <h3 className="text-lg font-semibold text-slate-700 mb-4">
+  <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide mb-6">
       {title}
     </h3>
     {children}
