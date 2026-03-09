@@ -42,6 +42,10 @@ employee: "",
 type: ""
 });
 
+/* Pagination */
+const [currentPage, setCurrentPage] = useState(1);
+const rowsPerPage = 10;
+
 useEffect(() => {
 fetchMistakes();
 }, []);
@@ -85,6 +89,7 @@ m => new Date(m.created_at) <= new Date(filters.to)
 }
 
 setFilteredData(data);
+setCurrentPage(1);
 
 };
 
@@ -96,6 +101,7 @@ employee: "",
 type: ""
 });
 setFilteredData(mistakes);
+setCurrentPage(1);
 };
 
 const handleDelete = async (id) => {
@@ -226,6 +232,13 @@ backgroundColor: "#10b981"
 ]
 };
 
+/* Pagination Logic */
+
+const indexOfLastRow = currentPage * rowsPerPage;
+const indexOfFirstRow = indexOfLastRow - rowsPerPage;
+const currentRows = filteredData.slice(indexOfFirstRow, indexOfLastRow);
+const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+
 return (
 
 <div className="min-h-screen bg-[#f8fafc] p-6 lg:p-10 space-y-8">
@@ -315,7 +328,7 @@ className="bg-gray-200 px-4 py-2 rounded-xl flex items-center gap-2 transition s
 
 <tbody>
 
-{filteredData.map(m => (
+{currentRows.map(m => (
 
 <tr key={m.id} className="border-t hover:bg-gray-50 transition">
 
@@ -357,25 +370,51 @@ className="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded t
 
 </table>
 
+{/* Pagination */}
+
+<div className="flex justify-center items-center gap-3 p-4">
+
+<button
+onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+disabled={currentPage === 1}
+className="px-3 py-1 bg-gray-200 rounded"
+>
+⬅
+</button>
+
+<span className="font-semibold">
+Page {currentPage} / {totalPages}
+</span>
+
+<button
+onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+disabled={currentPage === totalPages}
+className="px-3 py-1 bg-gray-200 rounded"
+>
+➡
+</button>
+
 </div>
 
-{/* IMAGE ZOOM MODAL */}
+</div>
+
+{/* IMAGE MODAL */}
 
 {viewImage && (
 
 <div
-className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-300"
+className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
 onClick={() => setViewImage(null)}
 >
 
 <div
-className="relative bg-white p-4 rounded-xl shadow-2xl transform transition-all duration-300 scale-100 animate-zoomIn"
+className="relative bg-white p-4 rounded-xl shadow-2xl animate-zoomIn"
 onClick={(e) => e.stopPropagation()}
 >
 
 <button
 onClick={() => setViewImage(null)}
-className="absolute top-2 right-3 text-2xl hover:scale-110 transition"
+className="absolute top-2 right-3 text-2xl"
 >
 ❌
 </button>
