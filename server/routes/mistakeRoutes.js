@@ -6,7 +6,9 @@ const authMiddleware = require("../middleware/auth");
 const path = require("path");
 const fs = require("fs");
 
-//  ENSURE UPLOADS FOLDER EXISTS //
+// =======================
+// ENSURE UPLOADS FOLDER EXISTS
+// =======================
 
 const uploadPath = path.join(__dirname, "../uploads");
 
@@ -14,7 +16,9 @@ if (!fs.existsSync(uploadPath)) {
   fs.mkdirSync(uploadPath);
 }
 
-// MULTER CONFIG // 
+// =======================
+// MULTER CONFIG
+// =======================
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -45,15 +49,18 @@ router.post(
       });
     }
 
-    const screenshot = req.file ? req.file.filename : null;
+    // store path instead of just filename
+    const screenshot_url = req.file
+      ? `/uploads/${req.file.filename}`
+      : null;
 
     try {
 
       await db.query(
         `INSERT INTO mistakes 
-         (claim_id, employee_name, mistake_type, description, screenshot) 
+         (claim_id, employee_name, mistake_type, description, screenshot_url) 
          VALUES ($1, $2, $3, $4, $5)`,
-        [claim_id, employee_name, mistake_type, description, screenshot]
+        [claim_id, employee_name, mistake_type, description, screenshot_url]
       );
 
       return res.status(201).json({
@@ -61,10 +68,13 @@ router.post(
       });
 
     } catch (err) {
+
       console.error("INSERT ERROR:", err);
+
       return res.status(500).json({
         message: "Insert failed",
       });
+
     }
 
   }
@@ -82,15 +92,7 @@ router.get("/", authMiddleware, async (req, res) => {
       "SELECT * FROM mistakes ORDER BY id DESC"
     );
 
-    // Add screenshot_url field for frontend preview
-    const data = result.rows.map((row) => ({
-      ...row,
-      screenshot_url: row.screenshot
-        ? `/uploads/${row.screenshot}`
-        : null
-    }));
-
-    return res.json(data);
+    return res.json(result.rows);
 
   } catch (err) {
 
