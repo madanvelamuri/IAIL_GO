@@ -225,8 +225,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KpiCard title="Total Incidents" value={totalMistakes} />
         <KpiCard title="Current Month" value={thisMonthCount} />
-        <KpiText title="Primary Incident Type" value={topMistake} />
-        <KpiText title="Lead Employee" value={topEmployee} />
+        <KpiText title="MOST OF MISTAKES DONE IN " value={topMistake} />
+        <KpiText title="MOST OF THE MISTAKES DONE BY" value={topEmployee} />
       </div>
 
       {/* Filter Section */}
