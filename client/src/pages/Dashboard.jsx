@@ -89,7 +89,7 @@ export default function Dashboard() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this record?")) return;
+    if (!window.confirm("Are you sure you want to delete this record?")) return;
 
     try {
       await API.delete(`/mistakes/${id}`);
@@ -135,7 +135,7 @@ export default function Dashboard() {
     link.setAttribute("href", url);
     link.setAttribute(
       "download",
-      `mistakes_report_${new Date().toISOString().split("T")[0]}.csv`
+      `report_${new Date().toISOString().split("T")[0]}.csv`
     );
 
     document.body.appendChild(link);
@@ -161,7 +161,7 @@ export default function Dashboard() {
       ? Object.keys(typeFrequency).reduce((a, b) =>
           typeFrequency[a] > typeFrequency[b] ? a : b
         )
-      : "-";
+      : "N/A";
 
   const employeeFrequency = {};
   filteredData.forEach((m) => {
@@ -174,7 +174,7 @@ export default function Dashboard() {
       ? Object.keys(employeeFrequency).reduce((a, b) =>
           employeeFrequency[a] > employeeFrequency[b] ? a : b
         )
-      : "-";
+      : "N/A";
 
   const monthly = {};
   filteredData.forEach((m) => {
@@ -188,13 +188,12 @@ export default function Dashboard() {
     labels: Object.keys(monthly),
     datasets: [
       {
-        label: "Monthly Trend",
+        label: "Monthly Incidents",
         data: Object.values(monthly),
-        borderColor: "#6366f1", // Indigo
-        backgroundColor: "rgba(99, 102, 241, 0.2)",
-        tension: 0.4,
+        borderColor: "#0f172a",
+        backgroundColor: "rgba(15, 23, 42, 0.05)",
+        tension: 0.2,
         fill: true,
-        pointBackgroundColor: "#4f46e5",
       },
     ],
   };
@@ -203,105 +202,101 @@ export default function Dashboard() {
     labels: Object.keys(typeFrequency),
     datasets: [
       {
-        label: "Frequency",
+        label: "Incident Frequency",
         data: Object.values(typeFrequency),
-        backgroundColor: [
-          "#3b82f6", // Blue
-          "#10b981", // Emerald
-          "#f59e0b", // Amber
-          "#ef4444", // Red
-          "#8b5cf6", // Violet
-        ],
-        borderRadius: 8,
+        backgroundColor: "#3b82f6",
       },
     ],
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-10 space-y-12 text-slate-900">
-
-      <div className="border-l-4 border-indigo-600 pl-6">
-        <h1 className="text-4xl font-black text-slate-900 tracking-tight">
-          📊 Operational Analytics
+    <div className="min-h-screen bg-slate-50 p-8 space-y-8">
+      {/* Header */}
+      <div className="border-b border-slate-200 pb-6">
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+          Operational Analytics
         </h1>
-        <p className="text-slate-500 mt-2 font-medium uppercase text-xs tracking-widest">
-          Insight Engine & Performance Tracking 🚀
+        <p className="text-slate-500 mt-1">
+          Comprehensive error tracking and performance metrics.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        <KpiCard title="Total Mistakes 🐞" value={totalMistakes} color="text-blue-600" bg="bg-blue-50" />
-        <KpiCard title="This Month 📅" value={thisMonthCount} color="text-indigo-600" bg="bg-indigo-50" />
-        <KpiText title="Primary Type 🔥" value={topMistake} color="text-rose-600" bg="bg-rose-50" />
-        <KpiText title="Lead Contributor 🧑‍💻" value={topEmployee} color="text-emerald-600" bg="bg-emerald-50" />
+      {/* KPI Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <KpiCard title="Total Incidents" value={totalMistakes} />
+        <KpiCard title="Current Month" value={thisMonthCount} />
+        <KpiText title="Primary Incident Type" value={topMistake} />
+        <KpiText title="Lead Employee" value={topEmployee} />
       </div>
 
-      <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 flex flex-wrap gap-4 items-center">
+      {/* Filter Section */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 items-center">
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">From</label>
+          <label className="text-xs font-semibold text-slate-500 uppercase">From</label>
           <Input type="date" value={filters.from} onChange={(e) => setFilters({ ...filters, from: e.target.value })} />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">To</label>
+          <label className="text-xs font-semibold text-slate-500 uppercase">To</label>
           <Input type="date" value={filters.to} onChange={(e) => setFilters({ ...filters, to: e.target.value })} />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Staff</label>
-          <Input type="text" placeholder="Search Employee..." value={filters.employee} onChange={(e) => setFilters({ ...filters, employee: e.target.value })} />
+          <label className="text-xs font-semibold text-slate-500 uppercase">Employee</label>
+          <Input type="text" placeholder="Search Name" value={filters.employee} onChange={(e) => setFilters({ ...filters, employee: e.target.value })} />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Type</label>
-          <Input type="text" placeholder="Search Error Type..." value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} />
+          <label className="text-xs font-semibold text-slate-500 uppercase">Type</label>
+          <Input type="text" placeholder="Search Type" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} />
         </div>
         
-        <div className="flex gap-2 mt-5">
-          <Button onClick={handleSearch} color="blue">🔍 Search</Button>
-          <Button onClick={handleReset} color="gray">♻️ Reset</Button>
-          <Button onClick={handleExportCSV} color="green">📄 Export</Button>
+        <div className="flex gap-2 mt-auto">
+          <Button onClick={handleSearch} color="blue">Apply Filters</Button>
+          <Button onClick={handleReset} color="gray">Reset</Button>
+          <Button onClick={handleExportCSV} color="green">Export CSV</Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        <ChartCard title="Monthly Volume Trend 📈">
-          <Line data={trendData} options={{ plugins: { legend: { display: false } } }} />
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <ChartCard title="Monthly Incident Trend">
+          <Line data={trendData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
         </ChartCard>
-        <ChartCard title="Error Categorization 🐞">
-          <Bar data={barData} options={{ plugins: { legend: { display: false } } }} />
+        <ChartCard title="Incident Distribution by Type">
+          <Bar data={barData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
         </ChartCard>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50/80 text-slate-500 uppercase text-[10px] font-bold tracking-tighter border-b border-slate-100">
+      {/* Data Table */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-slate-50 text-slate-600 font-semibold border-b">
             <tr>
-              <th className="p-5 text-left">📌 Claim ID</th>
-              <th className="p-5 text-left">👤 Employee</th>
-              <th className="p-5 text-left">🐞 Type</th>
-              <th className="p-5 text-left">📝 Description</th>
-              <th className="p-5 text-left">📅 Date</th>
-              <th className="p-5 text-center">⚙️ Action</th>
+              <th className="p-4">Claim ID</th>
+              <th className="p-4">Employee</th>
+              <th className="p-4">Incident Type</th>
+              <th className="p-4">Description</th>
+              <th className="p-4">Date</th>
+              <th className="p-4 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-50">
+          <tbody className="divide-y divide-slate-100">
             {filteredData.map((m) => (
-              <tr key={m.id} className="hover:bg-indigo-50/30 transition-colors group">
-                <td className="p-5 font-bold text-slate-700">{m.claim_id}</td>
-                <td className="p-5 font-medium text-slate-600">{m.employee_name}</td>
-                <td className="p-5">
-                  <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[11px] font-bold border border-slate-200">
-                    {m.mistake_type}
-                  </span>
+              <tr key={m.id} className="hover:bg-slate-50 transition-colors">
+                <td className="p-4 font-medium text-slate-900">{m.claim_id}</td>
+                <td className="p-4 text-slate-700">{m.employee_name}</td>
+                <td className="p-4 text-slate-700">{m.mistake_type}</td>
+                <td className="p-4 text-slate-500 max-w-xs truncate">{m.description}</td>
+                <td className="p-4 text-slate-600">
+                  {new Date(m.created_at).toLocaleDateString()}
                 </td>
-                <td className="p-5 text-slate-400 italic max-w-xs truncate">{m.description}</td>
-                <td className="p-5 font-mono text-slate-500">
-                  {new Date(m.created_at).toISOString().split("T")[0]}
-                </td>
-                <td className="p-5 text-center">
+                <td className="p-4 text-center">
                   <button
                     onClick={() => handleDelete(m.id)}
-                    className="bg-white border border-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white p-2 rounded-xl shadow-sm transition-all active:scale-90"
+                    className="text-slate-400 hover:text-red-600 transition-colors p-2"
+                    title="Delete Record"
                   >
-                    🗑️
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
                   </button>
                 </td>
               </tr>
@@ -309,27 +304,24 @@ export default function Dashboard() {
           </tbody>
         </table>
       </div>
-
     </div>
   );
 }
 
-const KpiCard = ({ title, value, color, bg }) => (
-  <div className={`bg-white p-7 rounded-3xl shadow-lg border border-slate-100 hover:shadow-2xl transition-all duration-300 relative overflow-hidden group`}>
-    <div className={`absolute top-0 right-0 w-24 h-24 ${bg} rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-150 duration-500 opacity-50`} />
-    <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest relative z-10">{title}</p>
-    <h2 className={`text-4xl font-black mt-3 ${color} relative z-10 tabular-nums`}>
-      <CountUp end={value} duration={1.5} /> <span className="text-xl opacity-40 italic">😅</span>
+const KpiCard = ({ title, value }) => (
+  <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+    <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">{title}</p>
+    <h2 className="text-3xl font-bold mt-2 text-slate-900">
+      <CountUp end={value} duration={1} />
     </h2>
   </div>
 );
 
-const KpiText = ({ title, value, color, bg }) => (
-  <div className={`bg-white p-7 rounded-3xl shadow-lg border border-slate-100 hover:shadow-2xl transition-all duration-300 relative overflow-hidden group`}>
-    <div className={`absolute top-0 right-0 w-24 h-24 ${bg} rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-150 duration-500 opacity-50`} />
-    <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest relative z-10">{title}</p>
-    <h2 className={`text-lg font-bold mt-3 ${color} relative z-10 truncate leading-tight`}>
-      {value} <span className="opacity-40 italic">😬</span>
+const KpiText = ({ title, value }) => (
+  <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+    <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">{title}</p>
+    <h2 className="text-lg font-semibold mt-2 text-slate-800 truncate">
+      {value}
     </h2>
   </div>
 );
@@ -337,34 +329,33 @@ const KpiText = ({ title, value, color, bg }) => (
 const Input = (props) => (
   <input
     {...props}
-    className="border border-slate-200 bg-slate-50/50 px-4 py-2.5 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none shadow-inner transition-all text-sm font-medium"
+    className="border border-slate-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm text-sm"
   />
 );
 
 const Button = ({ children, color, ...props }) => {
   const colors = {
-    blue: "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200",
-    gray: "bg-slate-500 hover:bg-slate-600 shadow-slate-200",
-    green: "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200",
+    blue: "bg-blue-600 hover:bg-blue-700",
+    gray: "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50",
+    green: "bg-slate-900 hover:bg-slate-800",
   };
 
+  const baseClass = "px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm";
+  const colorClass = colors[color] || colors.blue;
+  const textClass = color === "gray" ? "" : "text-white";
+
   return (
-    <button
-      {...props}
-      className={`${colors[color]} text-white px-7 py-2.5 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 font-bold text-sm`}
-    >
+    <button {...props} className={`${baseClass} ${colorClass} ${textClass}`}>
       {children}
     </button>
   );
 };
 
 const ChartCard = ({ title, children }) => (
-  <div className="bg-white p-10 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100">
-    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-8 border-b border-slate-50 pb-4">
+  <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide mb-6">
       {title}
     </h3>
-    <div className="h-[300px] flex items-center justify-center">
-        {children}
-    </div>
+    {children}
   </div>
 );
