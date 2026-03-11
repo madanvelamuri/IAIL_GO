@@ -369,18 +369,23 @@ export default function Dashboard() {
             onMouseLeave={handleMouseUp}
           >
             <img
-              src={viewImage}
-              alt="Screenshot"
-              style={{
-                transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-                transition: isDragging ? 'none' : 'transform 0.2s ease-out',
-                maxHeight: '85vh',
-                maxWidth: '90vw',
-                objectFit: 'contain'
-              }}
-              draggable="false"
-              className="rounded-lg shadow-2xl"
-            />
+  src={viewImage}
+  alt="Screenshot"
+  onError={(e) => {
+    console.warn("Screenshot not found:", viewImage);
+    e.target.src =
+      "https://via.placeholder.com/900x600?text=Screenshot+Not+Available";
+  }}
+  style={{
+    transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+    transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+    maxHeight: '85vh',
+    maxWidth: '90vw',
+    objectFit: 'contain'
+  }}
+  draggable="false"
+  className="rounded-lg shadow-2xl"
+/>
           </div>
 
           <p className="absolute bottom-6 text-white/50 text-sm">Use above controls to ZOOM IN & ZOOM OUT </p>
