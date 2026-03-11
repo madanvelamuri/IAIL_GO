@@ -35,7 +35,7 @@ export default function Dashboard() {
   const [viewImage, setViewImage] = useState(null);
 
   /* Version State */
-  const CURRENT_VERSION = "1.2.0";
+  const CURRENT_VERSION = "1.2.1";
   const [showUpdate, setShowUpdate] = useState(false);
 
   /* Zoom State */
@@ -251,7 +251,7 @@ export default function Dashboard() {
               <li>⚡ **Pagination:** Faster loading for large datasets.</li>
               <li>!!**Optional For Already Approved Claims.</li>
               <li>!!**Mandatory For Verfied Claims.</li>
-
+              <li>!! **Added Check box in the screenshot column.</li>
             </ul>
             <button 
               onClick={handleCloseUpdate}

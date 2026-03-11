@@ -8,6 +8,7 @@ export default function AddMistake() {
     mistake_type: "",
     description: "",
     screenshot: null,
+    is_verification: false, // New state for checkbox
   });
 
   const [message, setMessage] = useState("");
@@ -78,6 +79,13 @@ export default function AddMistake() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Conditional Validation: Screenshot mandatory for Verification Claim
+    if (form.is_verification && !form.screenshot) {
+      setMessage("Error: Screenshot is mandatory for Verification Claims.");
+      return;
+    }
+
     setLoading(true);
     setMessage("");
 
@@ -87,6 +95,7 @@ export default function AddMistake() {
       data.append("employee_name", form.employee_name);
       data.append("mistake_type", form.mistake_type);
       data.append("description", form.description);
+      data.append("is_verification", form.is_verification);
 
       if (form.screenshot) {
         data.append("screenshot", form.screenshot);
@@ -102,6 +111,7 @@ export default function AddMistake() {
         mistake_type: "",
         description: "",
         screenshot: null,
+        is_verification: false,
       });
 
     } catch (err) {
@@ -202,6 +212,22 @@ export default function AddMistake() {
             )}
           </div>
 
+          {/* Claim Type Checkbox Section */}
+          <div className="flex items-center gap-6 bg-white/5 border border-white/10 rounded-2xl p-5">
+            <span className="text-sm text-white/70">Claim Type:</span>
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={form.is_verification}
+                onChange={(e) => setForm({ ...form, is_verification: e.target.checked })}
+                className="w-5 h-5 accent-cyan-500 bg-white/10 border-white/20 rounded cursor-pointer"
+              />
+              <span className={`text-sm transition ${form.is_verification ? 'text-cyan-400 font-bold' : 'text-white/60'}`}>
+                Verification Claim (Mandatory Screenshot)
+              </span>
+            </label>
+          </div>
+
           {/* Description */}
           <textarea
             placeholder="Description"
@@ -215,9 +241,9 @@ export default function AddMistake() {
           />
 
           {/* Screenshot */}
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+          <div className={`bg-white/5 border rounded-2xl p-6 transition-colors ${form.is_verification && !form.screenshot ? 'border-amber-500/50' : 'border-white/10'}`}>
             <label className="block mb-3 text-sm text-white/70">
-              Upload Screenshot (Optional For Already Approved Claims**Mandatory For Verfied Claims)
+              Upload Screenshot {form.is_verification ? <span className="text-amber-400 font-bold">(MANDATORY)</span> : '(Optional)'}
             </label>
             <input
               type="file"
@@ -244,7 +270,7 @@ export default function AddMistake() {
           {message && (
             <div
               className={`mt-4 text-center text-sm font-semibold ${
-                message.includes("success")
+                message.includes("successfully")
                   ? "text-emerald-400"
                   : "text-red-400"
               }`}
