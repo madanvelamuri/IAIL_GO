@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import API from "../services/api";
 import CountUp from "react-countup";
 import { Bar, Line } from "react-chartjs-2";
-import { Search, RotateCcw, Download, Trash2, LayoutDashboard, Eye, ZoomIn, ZoomOut, Maximize, X } from "lucide-react";
+import { Search, RotateCcw, Download, Trash2, LayoutDashboard, Eye, ZoomIn, ZoomOut, Maximize, X, Rocket } from "lucide-react";
 
 import {
   Chart as ChartJS,
@@ -34,6 +34,10 @@ export default function Dashboard() {
   const [filteredData, setFilteredData] = useState([]);
   const [viewImage, setViewImage] = useState(null);
 
+  /* Version State */
+  const CURRENT_VERSION = "1.2.0";
+  const [showUpdate, setShowUpdate] = useState(false);
+
   /* Zoom State */
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -53,7 +57,18 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchMistakes();
+
+    // Check for Version Update
+    const lastVersion = localStorage.getItem("app_version");
+    if (lastVersion !== CURRENT_VERSION) {
+      setShowUpdate(true);
+    }
   }, []);
+
+  const handleCloseUpdate = () => {
+    localStorage.setItem("app_version", CURRENT_VERSION);
+    setShowUpdate(false);
+  };
 
   const fetchMistakes = async () => {
     try {
@@ -98,7 +113,7 @@ export default function Dashboard() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this record?")) return;
+    if (!window.confirm("Are u sure to Delete this data?")) return;
     try {
       await API.delete(`/mistakes/${id}`);
       fetchMistakes();
@@ -214,7 +229,37 @@ export default function Dashboard() {
   const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
 
   return (
-    <div className="min-h-screen bg-[#f1f5f9] p-6 lg:p-10 space-y-8 font-sans">
+    <div className="min-h-screen bg-[#f1f5f9] p-6 lg:p-10 space-y-8 font-sans relative">
+      
+      {/* UPDATE POPUP */}
+      {showUpdate && (
+        <div className="fixed bottom-10 left-10 z-[60] animate-in slide-in-from-left duration-500">
+          <div className="bg-white p-5 rounded-2xl shadow-2xl border-l-4 border-blue-600 max-w-sm relative">
+            <button 
+              onClick={handleCloseUpdate}
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+            >
+              <X size={16} />
+            </button>
+            <div className="flex items-center gap-2 text-blue-600 mb-2">
+              <Rocket size={20} />
+              <h4 className="font-bold text-slate-800">New Version {CURRENT_VERSION}</h4>
+            </div>
+            <ul className="text-xs text-slate-600 space-y-1.5 ml-1">
+              <li>✨ **Zoom & Drag:** Inspect screenshots in high detail.</li>
+              <li>📊 **UI Refinement:** New modern dashboard layout.</li>
+              <li>⚡ **Pagination:** Faster loading for large datasets.</li>
+            </ul>
+            <button 
+              onClick={handleCloseUpdate}
+              className="mt-4 w-full bg-blue-600 text-white py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition shadow-md"
+            >
+              Got it, thanks!
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <LayoutDashboard className="w-6 h-6 text-blue-600" />
@@ -297,6 +342,11 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* VERSION BADGE */}
+      <div className="fixed bottom-4 right-4 bg-slate-800/80 backdrop-blur-sm text-white text-[10px] px-3 py-1 rounded-full opacity-60 hover:opacity-100 transition shadow-lg border border-white/10 z-40">
+        Build: v{CURRENT_VERSION}-stable
+      </div>
+
       {/* ZOOMABLE IMAGE MODAL */}
       {viewImage && (
         <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-sm flex flex-col items-center justify-center z-50 p-4">
@@ -333,7 +383,7 @@ export default function Dashboard() {
             />
           </div>
 
-          <p className="absolute bottom-6 text-white/50 text-sm">Use controls above to zoom • Drag to move when zoomed</p>
+          <p className="absolute bottom-6 text-white/50 text-sm">Use above controls to ZOOM IN & ZOOM OUT </p>
         </div>
       )}
     </div>

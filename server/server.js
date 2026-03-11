@@ -9,9 +9,9 @@ const mistakeRoutes = require("./routes/mistakeRoutes");
 
 const app = express();
 
-// ============================
-// MIDDLEWARE
-// ============================
+
+// MIDDLEWARE //
+
 
 app.use(cors());
 app.use(express.json());
@@ -20,33 +20,29 @@ app.use(express.urlencoded({ extended: true }));
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ============================
-// ROUTES
-// ============================
+
+// ROUTES //
 
 app.use("/api/auth", authRoutes);
 app.use("/api/mistakes", mistakeRoutes);
 
-// ============================
-// HEALTH CHECK ROUTE
-// ============================
+
+// HEALTH CHECK ROUTE // 
 
 app.get("/", (req, res) => {
   res.json({ message: "IAIL Server Running Successfully 🚀" });
 });
 
-// ============================
-// GLOBAL ERROR HANDLER
-// ============================
+
+// GLOBAL ERROR HANDLER //
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: "Internal Server Error" });
 });
 
-// ============================
-// SERVER START
-// ============================
+
+// SERVER START //
 
 const PORT = process.env.PORT || 5000;
 
